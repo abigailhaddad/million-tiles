@@ -274,7 +274,7 @@ _HTML_US = r"""<!doctype html><html><head><meta charset="utf-8">
 </style></head><body><div class="wrap">
 <h1>One million Americans per tile</h1>
 <p class="sub">The contiguous US split into equal-population tiles. Hover a tile for its population and
-states; <b>scroll to zoom, drag to pan</b>.</p>
+states.</p>
 <div id="stage"><img id="mos" src="__TILES__" alt="equal-population tile map of the United States"></div>
 <div id="tip"></div>
 <p class="note">Tiles are groups of 2020 Census tracts holding ~1,000,000 people each; they cross
