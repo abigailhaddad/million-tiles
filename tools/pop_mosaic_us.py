@@ -30,6 +30,18 @@ import families as F                                   # noqa: E402
 
 TRACTS = ROOT / "data" / "cenpop2020_tract.txt"
 
+# major cities (name, lat, lon) to orient the map — well spread, kept light to avoid clutter
+CITIES = [
+    ("New York", 40.71, -74.01), ("Boston", 42.36, -71.06), ("Philadelphia", 39.95, -75.16),
+    ("Detroit", 42.33, -83.05), ("Chicago", 41.88, -87.63), ("Minneapolis", 44.98, -93.27),
+    ("Atlanta", 33.75, -84.39), ("Miami", 25.76, -80.19), ("Nashville", 36.16, -86.78),
+    ("Houston", 29.76, -95.37), ("Dallas", 32.78, -96.80), ("San Antonio", 29.42, -98.49),
+    ("Kansas City", 39.10, -94.58), ("Denver", 39.74, -104.99), ("Phoenix", 33.45, -112.07),
+    ("Las Vegas", 36.17, -115.14), ("Salt Lake City", 40.76, -111.89), ("Los Angeles", 34.05, -118.24),
+    ("San Francisco", 37.77, -122.42), ("Seattle", 47.61, -122.33), ("Portland", 45.52, -122.68),
+    ("New Orleans", 29.95, -90.07),
+]
+
 WATER_C = np.array([0.27, 0.42, 0.55])             # muted slate-blue for water (default)
 WATER_BY_PAL = {                                   # deeper water for dark/moody palettes
     "dark": np.array([0.11, 0.22, 0.32]),
@@ -121,9 +133,10 @@ def _text_spaced(d, xy, s, font, fill, tracking, anchor_center=True):
         x += w + tracking
 
 
-def art_frame(out, land, water, cpop, k, ncol, seed=7):
+def art_frame(out, land, water, cpop, k, ncol, seed=7, cities=None):
     """Turn the raw mosaic into a framed art print: glazed-tile enrichment + grain, the country
-    floated on a warm vignetted ground with a soft shadow, a hairline frame and elegant type."""
+    floated on a warm vignetted ground with a soft shadow, a hairline frame and elegant type.
+    cities: optional [(name, px, py)] in map space, drawn as labelled dots."""
     H, W, _ = out.shape
     country = land | water
     rng = np.random.default_rng(seed)
@@ -182,7 +195,22 @@ def art_frame(out, land, water, cpop, k, ncol, seed=7):
     d.text((CW / 2, CH - bot * 0.34),
            "2020 Census tract centers of population  ·  Albers projection  ·  "
            "a four-colour map — colour carries no meaning", font=fz, fill=mut, anchor="mm")
+
+    if cities:
+        _draw_cities(d, cities, W, m, top)
     return img
+
+
+def _draw_cities(d, cities, W, ox=0, oy=0):
+    """Labelled white dots for cities on an ImageDraw, offset by (ox, oy)."""
+    fc = pm._font(round(0.0115 * W), bold=True)
+    rdot = max(2, round(0.0016 * W))
+    for name, px, py in cities:
+        x, y = px + ox, py + oy
+        d.ellipse([x - rdot, y - rdot, x + rdot, y + rdot], fill=(245, 245, 245),
+                  outline=(20, 16, 12), width=2)
+        d.text((x + rdot + 5, y), name, font=fc, fill=(248, 246, 242),
+               stroke_width=3, stroke_fill=(15, 12, 9), anchor="lm")
 
 
 def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
@@ -318,6 +346,7 @@ def main():
                          "(0 = off, keep exact-population tendrils)")
     ap.add_argument("--palette", choices=list(PALETTES), default="ember")
     ap.add_argument("--no-art", action="store_true", help="plain band instead of the framed art print")
+    ap.add_argument("--cities", action="store_true", help="label major cities to orient the map")
     ap.add_argument("--html", action="store_true", help="also write an interactive hover HTML")
     ap.add_argument("--no-cache", action="store_true", help="recompute the clustering")
     ap.add_argument("--seed", type=int, default=3)
@@ -386,10 +415,18 @@ def main():
     out[water] = WATER_BY_PAL.get(args.palette, WATER_C)
 
     base_rgb = (np.clip(out, 0, 1) * 255).astype(np.uint8)        # raw tiles for the hover layer
+    cities = None
+    if args.cities:
+        tp = bn._build_panel(bn.CONUS, S, "albers")["to_px"]      # cheap: projections only
+        cx, cy = tp(np.array([c[2] for c in CITIES]), np.array([c[1] for c in CITIES]))
+        cities = [(CITIES[i][0], cx[i], cy[i]) for i in range(len(CITIES))
+                  if 0 <= cx[i] < W and 0 <= cy[i] < H]
+    if cities:                                                # put labels on the hover map too
+        bi = Image.fromarray(base_rgb); _draw_cities(ImageDraw.Draw(bi), cities, W); base_rgb = np.asarray(bi)
     if args.no_art:
         img = add_us_legend(Image.fromarray(base_rgb.copy()), cpop, args.k, ncol)
     else:
-        img = art_frame(out, land, water, cpop, args.k, ncol)
+        img = art_frame(out, land, water, cpop, args.k, ncol, cities=cities)
     dest = ROOT / "output" / f"us_popmosaic_{args.k}_{args.palette}.png"
     img.save(dest)
     tick(f"saved -> {dest.relative_to(ROOT)}  ({W}x{H}, {ncol}-colour, palette={args.palette})")

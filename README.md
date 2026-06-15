@@ -1,82 +1,143 @@
 # One Million Americans Per Tile
 
-Tile a place — a state, DC, or the whole country — so **every tile holds about the same number
-of people**. A tile's *size* is then inverse population density: tiny where millions pack in,
-vast where almost no one lives. Tiles are 4-coloured so no two neighbours share a colour (the
-colour carries no meaning), and the rivers are painted blue.
+Cut a place — a state, DC, or the whole country — into pieces that each hold **about the same
+number of people**, and draw them like a tile mosaic. Because every tile holds the same headcount,
+a tile's *size* becomes inverse population density: tiny where millions pack in, vast where almost
+no one lives. Tiles are coloured with the **fewest colours so no two neighbours match** (the colour
+means nothing); rivers and lakes are blue.
 
-It's a fine-grained, art-leaning take on the equal-population-partition idea — see
-[Prior art](#prior-art). Everything is built from public-domain US Census data; no API key.
+> **🔗 Live site: [abigailhaddad.github.io/million-tiles](https://abigailhaddad.github.io/million-tiles/)**
 
-![the contiguous US as equal-population tiles](site/assets/national.png)
+![the contiguous US as equal-population tiles](docs/assets/national.png)
+
+It's a fine-grained, art-leaning take on an old idea — see [Prior art](#prior-art). Everything is
+built from public-domain US Census data; no API key.
 
 ## Quick start
+
+Requires `python3` with `numpy`, `scipy`, `Pillow`. No other dependencies — boundary data is
+fetched from public Census endpoints with the stdlib.
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-./fetch_data.sh                                   # ~14 MB of Census data
+./fetch_data.sh                                   # ~14 MB of Census centers-of-population data
 
-# the whole lower-48, one tile ≈ one million people, as a framed art print + hover HTML
-python tools/pop_mosaic_us.py --k 1000000 --height 1800 --palette dark --html
+# the whole lower-48, one tile ≈ one million people: framed print + city labels + hover page
+python tools/pop_mosaic_us.py --k 1000000 --height 1800 --palette dark --cities --html
 
-# a single state or DC (real block-group tiles), with a neighbourhood-hover HTML
-python tools/pop_mosaic.py "District of Columbia" \
-    --literal --merge 9000 --color adjacency --grout 1.4 --html
+# pick another palette, or another headcount
+python tools/pop_mosaic_us.py --k 500000 --palette pastel --cities
+
+# the analyses + the palette sheet
+python tools/us_analysis.py                       # accuracy + uniqueness, nationally
+python tools/us_palette_sheet.py                  # every palette on the national map
 ```
 
-Outputs land in `output/`. State boundary GeoJSON is fetched from the Census on first use and
-cached under `data/cache/` (so the first national run is slower).
+Outputs land in `output/`. State boundary GeoJSON is fetched on first use and cached under
+`data/cache/` (so the first national run is slower).
 
-## What's here
+## How it's built
 
-| script | what it makes |
-|---|---|
-| `tools/pop_mosaic_us.py` | the national tiling — tracts → Delaunay adjacency → Albers, 13 palettes, framed art print, hover HTML |
-| `tools/pop_mosaic.py` | a single state / DC from real block-group polygons |
-| `tools/us_palette_sheet.py` | a contact sheet of every palette on the national map |
-| `tools/pop_sweep.py` · `pop_sweep_plot.py` | how tight a population band you can hit vs the target headcount (table / chart) |
-| `tools/shape_compare.py` | do the shape rules matter, or do the constraints dominate? |
+1. **Units.** Census *block groups* (~1,500 people, with polygons) for a state; *tract centers of
+   population* (~4,000 people, just points) for the nation. Blocks (~8 M) are finer but aren't
+   published as a centers-of-population file, so tracts are the practical floor.
+2. **Adjacency.** Block-group polygons give it directly; the national point set uses a Delaunay
+   triangulation of the projected tract centres.
+3. **Bucketing.** Grow contiguous clusters to a target headcount (`regionalize`), move border units
+   to equalise population (`balance`), force the tile count to `round(total / target)`
+   (`enforce_count`), and optionally round the shapes in (`compactify` — trading a little spread for
+   less "gerrymandered" tiles).
+4. **Colour.** A DSATUR **proper graph colouring**: the fewest colours so no two adjacent tiles
+   match — the four-colour theorem in practice (planar maps need ≤4). Colour carries no data.
+5. **Render.** Mosaic-style tiles with thin grout; water despeckled/thinned and painted blue; an
+   optional framed "art print" composite. The contiguous US uses an **Albers Equal-Area**
+   projection so the country isn't north-south stretched.
 
-## How it works
+## Two questions worth asking
 
-1. **Units** — Census *block groups* (~1,500 people, polygons) for a state; *tract centers of
-   population* (~4,000 people, points) for the nation. Blocks (~8 M) are finer but not published
-   as a centers-of-population file, so tracts are the practical floor.
-2. **Adjacency** — block-group polygons give it directly; the national point set uses a Delaunay
-   triangulation.
-3. **Bucketing** — grow connected clusters to a target headcount, equalise population by moving
-   border units (`balance`), force the tile count to `round(total/target)` (`enforce_count`), and
-   optionally round the shapes in (`compactify`, trading a little spread for less "gerrymandered"
-   tiles).
-4. **Colour** — a DSATUR proper graph colouring: the fewest colours so no two adjacent tiles
-   match (planar maps need ≤4).
-5. **Render** — bevel + thin grout; water despeckled/thinned and painted blue; an optional framed
-   "art print" composite.
+Because the tiles are *forced* to equal population, two things aren't obvious — and both are
+quick to measure (`tools/us_analysis.py`, national, no rendering needed).
 
-## Data
+### How accurate can "equal" be?
+
+Each tile aims for a target headcount; how close do they actually land? The band tightens as the
+target grows, because each tile then averages over more tracts — until it hits the floor set by the
+~4,000-person tract atom. Small targets (a tile is only a few tracts) are inherently loose; large
+ones are nearly exact.
+
+![accuracy vs target](docs/assets/us_accuracy.png)
+
+### Is there one way to draw the buckets, or many?
+
+Cluster the same target from different random seeds and measure how much they agree (Rand index).
+With **many small tiles**, the equal-population + contiguity constraints pin a *near-unique* answer —
+seeds barely disagree (agreement ≈ 1.000 at thousands of tiles). With **few big tiles**, real
+combinatorial freedom opens up: different seeds find genuinely different, equally-valid bucketings
+(agreement falls to ≈ 0.97 at a few dozen tiles). So "how many ways are there?" depends on how big
+you make the pieces.
+
+![uniqueness vs target](docs/assets/us_uniqueness.png)
+
+**Why does the seed change the map at all?** The tiles are grown one at a time from randomly-ordered
+starting points (`regionalize`), and the population-equalising moves (`balance`, `compactify`) are
+applied in random order too — so the seed decides *where* the buckets start growing and *how* ties
+are broken. Since there is no unique equal-population partition, different seeds settle on different
+valid ones. Two such maps, same target, different seeds:
+
+![two valid bucketings](docs/assets/us_two_bucketings.png)
+
+(The shape *rule* — compact vs. stringy — barely changes *which* units group together; it mostly
+sets how round the borders are. `tools/shape_compare.py` measures that.)
+
+## Explore it
+
+- **[Hover the country](docs/assets/national-hover.html)** — each tile shows its population and which
+  states it covers, and by what %.
+
+(The same engine works on a single state from real block-group polygons via `tools/pop_mosaic.py`,
+but the live site is US-only.)
+
+## Data sources
 
 `fetch_data.sh` pulls the public-domain Census inputs:
-- 2020 block-group & tract centers of population
-- county population estimates (also maps state code → FIPS)
 
-State / water / parks GeoJSON come from Census TIGERweb on demand. DC neighbourhoods (hover only)
-come from DC Open Data "Neighborhood Clusters".
+- **Centers of population** — 2020 Census block-group & tract population-weighted centroids.
+- **County population** — Census population estimates (also maps state code → FIPS).
+
+State / water / parks GeoJSON come from Census **TIGERweb** on demand (cached, git-ignored). DC
+neighbourhoods (hover only) come from **DC Open Data** "Neighborhood Clusters". All public domain /
+open government data.
+
+## Repo layout
+
+```
+src/
+  state_data.py     fetch + cache + rasterize any state -> region map
+  build_national.py Albers CONUS projection + land/water masks
+  families.py       the tile renderer (bevel + grout)
+tools/
+  pop_mosaic_us.py  the national tiling: tracts -> buckets -> art print + hover HTML
+  pop_mosaic.py     a single state / DC from real block-group polygons
+  us_analysis.py    the accuracy + uniqueness analyses (national)
+  us_palette_sheet.py  every palette on the national map
+  pop_sweep.py / pop_sweep_plot.py   accuracy-vs-target for one state
+  shape_compare.py  do the shape rules matter, or do the constraints dominate?
+docs/               the static site (GitHub Pages): index.html + assets/
+data/               Census inputs (git-ignored; ./fetch_data.sh)
+output/             renders (git-ignored)
+```
 
 ## Prior art
 
-The *idea* of partitioning a place into equal-population pieces is well-established. Closest
-relatives: Neil Freeman's [Fifty States with Equal Population](http://fakeisthenewreal.org/reform/),
-the [Engaging Data / FlowingData](https://engaging-data.com/splitting-us-by-population/) "split the
-US by population" interactives, Slate's Equal Population Mapper, and capacity-constrained Voronoi /
-automated-redistricting methods generally. What's different here is the *granularity* (hundreds of
-tiles → a texture, not a few regions) and the *art-first execution* (mosaic rendering, four-colour
-map, the analysis layer, the hover).
-
-## Requirements
-
-`numpy`, `scipy`, `pillow`. See `requirements.txt`.
+Partitioning a place into equal-population pieces is an old idea. The closest relatives are Neil
+Freeman's [Fifty States with Equal Population](http://fakeisthenewreal.org/reform/), the
+[Engaging Data / FlowingData](https://engaging-data.com/splitting-us-by-population/) "split the US by
+population" interactives, Slate's Equal Population Mapper, and capacity-constrained Voronoi /
+automated-redistricting methods generally. What's different here is the **granularity** — hundreds of
+tiles, so it reads as a texture rather than a few regions — the **art-first execution**, and the
+analysis of *how accurate* and *how unique* the bucketings are.
 
 ## License
 
-MIT.
+MIT. Built from public-domain US Census data.

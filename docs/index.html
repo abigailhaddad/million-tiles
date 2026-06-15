@@ -17,7 +17,10 @@
   figure{margin:30px 0}
   figure img{width:100%;height:auto;display:block;border-radius:10px;
     box-shadow:0 20px 70px rgba(0,0,0,.6)}
+  .hero-frame{width:100%;height:76vh;min-height:480px;border:1px solid var(--line);
+    border-radius:10px;background:#17120d;box-shadow:0 20px 70px rgba(0,0,0,.6)}
   figcaption{color:var(--mut);font-size:14px;margin-top:10px;text-align:center}
+  figcaption a{color:var(--gold)}
   h2{font-size:26px;letter-spacing:.02em;margin:48px 0 10px}
   p{color:#ded6c8} .mut{color:var(--mut)}
   .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:22px 0}
@@ -45,22 +48,14 @@
   </header>
 
   <figure>
-    <img src="assets/national.png" alt="The contiguous US as equal-population tiles">
-    <figcaption>329 tiles · each ≈ 1,000,000 residents (middle half 881k–1,118k) · 2020 Census
-    tracts · Albers projection · a four-colour map, colour carries no meaning.</figcaption>
+    <iframe src="assets/national-hover.html" title="Hover the live US tile map"
+            loading="lazy" class="hero-frame"></iframe>
+    <figcaption><b>Hover any tile</b> to see its population and which states it covers — or
+    <a href="assets/national-hover.html">open it full-screen</a> ·
+    <a href="assets/national.png">download the print</a>. 329 tiles · each ≈ 1,000,000 residents
+    (middle half 881k–1,118k) · 2020 Census tracts · Albers projection.</figcaption>
   </figure>
 
-  <h2>Explore it</h2>
-  <div class="cards">
-    <a class="card" href="assets/national-hover.html">
-      <b>Hover the country →</b>
-      <span>Every tile shows its population and which states it covers, and by what %.</span>
-    </a>
-    <a class="card" href="assets/dc-hover.html">
-      <b>Hover Washington, DC →</b>
-      <span>The same idea at city scale — each tile ≈ 9,000 people, labelled by neighbourhood.</span>
-    </a>
-  </div>
 
   <h2>How it's built</h2>
   <ol>
@@ -73,19 +68,47 @@
     <li><b>Render.</b> Mosaic-style tiles with thin grout; rivers and lakes in blue.</li>
   </ol>
 
-  <h2>How equal is "equal"?</h2>
+  <h2>How accurate can "equal" be?</h2>
+  <p class="mut">Each tile aims for a target headcount; the band shows where they actually land.
+  It tightens as the target grows — each tile then averages over more tracts — until it hits the
+  floor set by the ~4,000-person tract atom. Nationally, anything from ~150k people per tile up is
+  near-exact; only small targets (a tile is just a few tracts) are loose.</p>
   <figure>
-    <img src="assets/sensitivity.png" alt="Population band vs target headcount">
-    <figcaption>How tightly the tiles can hold a target headcount, and how that tightens as the
-    target grows (Maryland). The band closes toward 100%, then flares once a place holds only a
-    few tiles.</figcaption>
+    <img src="assets/us_accuracy.png" alt="Population band vs target headcount, nationally">
+    <figcaption>Tile population as a % of its target, across the whole US.</figcaption>
   </figure>
 
-  <h2>Thirteen colourways</h2>
+  <h2>One way to draw them, or many?</h2>
+  <p class="mut">Cluster the same target from different random seeds and measure how much they
+  agree. With <b>many small tiles</b> the equal-population + contiguity constraints pin a
+  near-unique answer; with <b>few big tiles</b> real freedom opens up and different seeds find
+  different, equally-valid bucketings. So "how many ways are there?" depends on how big you make
+  the pieces.</p>
+  <figure>
+    <img src="assets/us_uniqueness.png" alt="Partition agreement vs target headcount">
+    <figcaption>Agreement between random seeds at the same target (100% = identical buckets).</figcaption>
+  </figure>
+
+  <h2>Different ways to draw it</h2>
+  <p class="mut">There's no single "right" map. Re-roll the random seed and you get a different —
+  equally valid — equal-population bucketing:</p>
+  <figure>
+    <img src="assets/us_two_bucketings.png" alt="two equally valid bucketings of the US">
+    <figcaption>Same target (~6M people per tile, 55 tiles), two seeds. Both legitimate; the seams
+    fall differently.</figcaption>
+  </figure>
+  <p class="mut"><b>Why does the seed change the map?</b> The tiles are grown one at a time from
+  randomly-ordered starting points, and the population-equalising tweaks are then applied in random
+  order too — so the seed decides <em>where</em> the buckets start and <em>how</em> ties are broken.
+  Because there's no unique equal-population partition (many are equally valid), different seeds
+  settle on different ones. With many small tiles the constraints are so tight that nearly every
+  seed lands on almost the same answer; with a few big tiles, there's real room to differ — which is
+  exactly what the agreement curve above measures.</p>
+  <p class="mut">…and the colour is purely an aesthetic choice — the same tiling in every built-in
+  palette:</p>
   <figure>
     <img src="assets/palettes.png" alt="palette options on the national map">
-    <figcaption>The same tiling in every built-in palette. The colour carries no data — it's
-    chosen for the eye.</figcaption>
+    <figcaption>Thirteen colourways. The colour carries no data.</figcaption>
   </figure>
 
   <hr>
