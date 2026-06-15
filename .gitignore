@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+# large Census inputs (regenerate via ./fetch_data.sh)
+data/cenpop2020_bg.txt
+data/cenpop2020_tract.txt
+data/county_pop_2023.csv
+# fetched-on-demand boundary cache
+data/cache/
+# render artifacts
+output/

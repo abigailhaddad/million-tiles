@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>One Million Americans Per Tile</title>
+<style>
+  :root{--bg:#15110c;--panel:#1c1710;--ink:#ece4d6;--mut:#9a8f7c;--gold:#e0c06e;--line:#352c20}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:17px/1.65 "Iowan Old Style",Georgia,serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--gold)}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  header{padding:64px 0 26px;text-align:center}
+  h1{font-size:clamp(30px,5vw,52px);letter-spacing:.04em;margin:0 0 10px;font-weight:600}
+  .tag{color:var(--mut);font-size:clamp(16px,2.2vw,20px);max-width:62ch;margin:0 auto}
+  figure{margin:30px 0}
+  figure img{width:100%;height:auto;display:block;border-radius:10px;
+    box-shadow:0 20px 70px rgba(0,0,0,.6)}
+  figcaption{color:var(--mut);font-size:14px;margin-top:10px;text-align:center}
+  h2{font-size:26px;letter-spacing:.02em;margin:48px 0 10px}
+  p{color:#ded6c8} .mut{color:var(--mut)}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:22px 0}
+  @media(max-width:680px){.cards{grid-template-columns:1fr}}
+  .card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:20px 22px;text-decoration:none;color:var(--ink);transition:border-color .15s}
+  .card:hover{border-color:var(--gold)}
+  .card b{display:block;font-size:19px;margin-bottom:4px}
+  .card span{color:var(--mut);font-size:15px}
+  ol{color:#ded6c8} ol li{margin:6px 0}
+  hr{border:none;border-top:1px solid var(--line);margin:46px 0}
+  footer{color:var(--mut);font-size:14px;padding:10px 0 70px}
+  .pill{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:999px;
+    padding:4px 12px;color:var(--mut);font-size:14px;margin:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>One Million Americans Per Tile</h1>
+    <p class="tag">The contiguous United States cut into 329 pieces that each hold about the same
+    number of people. A tile's <em>size</em> is inverse population density — small where millions
+    pack in, vast where almost no one lives.</p>
+  </header>
+
+  <figure>
+    <img src="assets/national.png" alt="The contiguous US as equal-population tiles">
+    <figcaption>329 tiles · each ≈ 1,000,000 residents (middle half 881k–1,118k) · 2020 Census
+    tracts · Albers projection · a four-colour map, colour carries no meaning.</figcaption>
+  </figure>
+
+  <h2>Explore it</h2>
+  <div class="cards">
+    <a class="card" href="assets/national-hover.html">
+      <b>Hover the country →</b>
+      <span>Every tile shows its population and which states it covers, and by what %.</span>
+    </a>
+    <a class="card" href="assets/dc-hover.html">
+      <b>Hover Washington, DC →</b>
+      <span>The same idea at city scale — each tile ≈ 9,000 people, labelled by neighbourhood.</span>
+    </a>
+  </div>
+
+  <h2>How it's built</h2>
+  <ol>
+    <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each) — the
+      practical finest nationwide unit.</li>
+    <li><b>Bucketing.</b> Grow contiguous clusters to a target headcount, then move border tracts
+      to equalise population and gently round the shapes in.</li>
+    <li><b>Colour.</b> The fewest colours so no two neighbouring tiles match — the four-colour
+      theorem in action. Colour means nothing.</li>
+    <li><b>Render.</b> Mosaic-style tiles with thin grout; rivers and lakes in blue.</li>
+  </ol>
+
+  <h2>How equal is "equal"?</h2>
+  <figure>
+    <img src="assets/sensitivity.png" alt="Population band vs target headcount">
+    <figcaption>How tightly the tiles can hold a target headcount, and how that tightens as the
+    target grows (Maryland). The band closes toward 100%, then flares once a place holds only a
+    few tiles.</figcaption>
+  </figure>
+
+  <h2>Thirteen colourways</h2>
+  <figure>
+    <img src="assets/palettes.png" alt="palette options on the national map">
+    <figcaption>The same tiling in every built-in palette. The colour carries no data — it's
+    chosen for the eye.</figcaption>
+  </figure>
+
+  <hr>
+  <h2>Prior art</h2>
+  <p class="mut">Partitioning a place into equal-population pieces is an old idea. The closest
+  relatives are Neil Freeman's <a href="http://fakeisthenewreal.org/reform/">Fifty States with
+  Equal Population</a>, the <a href="https://engaging-data.com/splitting-us-by-population/">Engaging
+  Data / FlowingData</a> "split the US by population" interactives, Slate's Equal Population Mapper,
+  and capacity-constrained Voronoi / automated-redistricting methods generally. What's different
+  here is the granularity — hundreds of tiles, so it reads as a texture rather than a few regions —
+  and the art-first execution.</p>
+
+  <p>
+    <span class="pill">2020 US Census · public domain</span>
+    <span class="pill">code: numpy · scipy · pillow</span>
+    <span class="pill">MIT licensed</span>
+  </p>
+
+  <footer>Built from public-domain US Census data. Source &amp; method in the project README.</footer>
+
+</div>
+</body>
+</html>
