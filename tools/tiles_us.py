@@ -1,13 +1,13 @@
-"""National equal-population mosaic (CONUS): bucket Census TRACTS into ~K-person super-tiles.
+"""National equal-population tiling (CONUS): bucket Census TRACTS into ~K-person super-tiles.
 
 Tracts (~85k nationally, ~4,000 people each) are the practical finest unit for the whole US
 (blocks are ~8M and not in the centers-of-population dataset). Each super-tile holds ~K people,
 so a tile is "a million-ish neighbours" regardless of how much land that takes.
 
-Reuses build_national's Albers CONUS projection + land mask, and pop_mosaic's clustering. Tract
+Reuses build_national's Albers CONUS projection + land mask, and tiles's clustering. Tract
 adjacency comes from a Delaunay triangulation of the projected centres (no polygons needed).
 
-    python tools/pop_mosaic_us.py --k 1000000 --height 1300
+    python tools/tiles_us.py --k 1000000 --height 1300
 """
 import argparse
 import csv
@@ -23,7 +23,7 @@ from scipy.spatial import Delaunay, cKDTree
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools")); sys.path.insert(0, str(ROOT / "src"))
-import pop_mosaic as pm                                # noqa: E402
+import tiles as pm                                # noqa: E402
 import build_national as bn                            # noqa: E402
 import state_data as sd                                # noqa: E402
 import families as F                                   # noqa: E402
@@ -134,7 +134,7 @@ def _text_spaced(d, xy, s, font, fill, tracking, anchor_center=True):
 
 
 def art_frame(out, land, water, cpop, k, ncol, seed=7, cities=None):
-    """Turn the raw mosaic into a framed art print: glazed-tile enrichment + grain, the country
+    """Turn the raw tiling into a framed art print: glazed-tile enrichment + grain, the country
     floated on a warm vignetted ground with a soft shadow, a hairline frame and elegant type.
     cities: optional [(name, px, py)] in map space, drawn as labelled dots."""
     H, W, _ = out.shape
@@ -193,8 +193,8 @@ def art_frame(out, land, water, cpop, k, ncol, seed=7, cities=None):
            f"each tile ~ {k:,} residents       middle half  {p25:,.0f} - {p75:,.0f}"
            f"       full range  {cpop.min():,.0f} - {cpop.max():,.0f}", font=fk, fill=gold, anchor="mm")
     d.text((CW / 2, CH - bot * 0.34),
-           "2020 Census tract centers of population  ·  Albers projection  ·  "
-           "a four-colour map — colour carries no meaning", font=fz, fill=mut, anchor="mm")
+           "Data: 2020 U.S. Census, tract centers of population  ·  Albers Equal-Area projection  ·  "
+           "four-colour map, colour carries no meaning", font=fz, fill=mut, anchor="mm")
 
     if cities:
         _draw_cities(d, cities, W, m, top)
@@ -248,7 +248,7 @@ def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
                       np.zeros_like(idm, np.uint8)])
     html = _HTML_US
     for kk, vv in {"__W__": str(W), "__H__": str(H), "__TITLE__": title,
-                   "__MOSAIC__": pm._png_uri(base_rgb), "__PICK__": pm._png_uri(pick),
+                   "__TILES__": pm._png_uri(base_rgb), "__PICK__": pm._png_uri(pick),
                    "__DATA__": json.dumps(data, separators=(",", ":"))}.items():
         html = html.replace(kk, vv)
     open(dest, "w").write(html)
@@ -262,8 +262,9 @@ _HTML_US = r"""<!doctype html><html><head><meta charset="utf-8">
   font:16px/1.5 "Iowan Old Style",Georgia,serif}
  .wrap{max-width:1100px;margin:0 auto;padding:30px 20px 70px}
  h1{font-size:25px;letter-spacing:.04em;margin:0 0 2px} .sub{color:var(--mut);font-size:15px;margin:0 0 18px}
- #stage{position:relative;display:inline-block;width:100%}
- #stage img{display:block;width:100%;height:auto}
+ #stage{position:relative;display:block;width:100%;overflow:hidden;cursor:grab;touch-action:none}
+ #stage.drag{cursor:grabbing}
+ #stage img{display:block;width:100%;height:auto;transform-origin:0 0;will-change:transform}
  #tip{position:fixed;pointer-events:none;z-index:9;max-width:320px;display:none;
   background:rgba(12,9,6,.96);border:1px solid rgba(224,192,110,.5);border-radius:9px;
   padding:11px 13px;font-size:14px;box-shadow:0 8px 28px rgba(0,0,0,.6)}
@@ -272,9 +273,9 @@ _HTML_US = r"""<!doctype html><html><head><meta charset="utf-8">
  .note{color:var(--mut);font-size:13px;margin-top:14px}
 </style></head><body><div class="wrap">
 <h1>One million Americans per tile</h1>
-<p class="sub">The contiguous US split into equal-population tiles. Hover a tile to see its
-population and which states it covers.</p>
-<div id="stage"><img id="mos" src="__MOSAIC__" alt="equal-population tile map of the United States"></div>
+<p class="sub">The contiguous US split into equal-population tiles. Hover a tile for its population and
+states; <b>scroll to zoom, drag to pan</b>.</p>
+<div id="stage"><img id="mos" src="__TILES__" alt="equal-population tile map of the United States"></div>
 <div id="tip"></div>
 <p class="note">Tiles are groups of 2020 Census tracts holding ~1,000,000 people each; they cross
 state lines. Colours are a four-colour map and carry no meaning.</p>
@@ -304,6 +305,26 @@ mos.addEventListener('mousemove',e=>{
   tip.style.left=tx+'px'; tip.style.top=ty+'px';
 });
 mos.addEventListener('mouseleave',()=>tip.style.display='none');
+
+// --- zoom + pan (the hover hit-test above reads the live rect, so it keeps working) ---
+const st=document.getElementById('stage');
+let z=1, tx=0, ty=0;
+function apply(){
+  const sw=st.clientWidth, sh=mos.clientHeight;
+  tx=Math.min(0,Math.max(sw*(1-z),tx)); ty=Math.min(0,Math.max(sh*(1-z),ty));
+  mos.style.transform='translate('+tx+'px,'+ty+'px) scale('+z+')';
+}
+st.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=st.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const nz=Math.min(9,Math.max(1, z*(e.deltaY<0?1.2:1/1.2)));
+  tx=mx-(mx-tx)*nz/z; ty=my-(my-ty)*nz/z; z=nz; apply();
+},{passive:false});
+let pan=false, lx=0, ly=0;
+st.addEventListener('pointerdown',e=>{pan=true;lx=e.clientX;ly=e.clientY;st.classList.add('drag');st.setPointerCapture(e.pointerId);});
+st.addEventListener('pointerup',()=>{pan=false;st.classList.remove('drag');});
+st.addEventListener('pointermove',e=>{if(pan){tx+=e.clientX-lx;ty+=e.clientY-ly;lx=e.clientX;ly=e.clientY;apply();}});
+st.addEventListener('dblclick',()=>{z=1;tx=0;ty=0;apply();});
 </script></body></html>"""
 
 
@@ -411,7 +432,7 @@ def main():
     lut[col < 0] = 0
     rng = np.random.default_rng(args.seed)
     lut = np.clip(lut * rng.uniform(0.94, 1.06, nbig + 1)[:, None], 0, 1)
-    out = F.render_mosaic(big, nbig, land.astype(int), lut, gold_class=-1, grout_width=args.grout)
+    out = F.render_tiles(big, nbig, land.astype(int), lut, gold_class=-1, grout_width=args.grout)
     out[water] = WATER_BY_PAL.get(args.palette, WATER_C)
 
     base_rgb = (np.clip(out, 0, 1) * 255).astype(np.uint8)        # raw tiles for the hover layer
@@ -427,14 +448,14 @@ def main():
         img = add_us_legend(Image.fromarray(base_rgb.copy()), cpop, args.k, ncol)
     else:
         img = art_frame(out, land, water, cpop, args.k, ncol, cities=cities)
-    dest = ROOT / "output" / f"us_popmosaic_{args.k}_{args.palette}.png"
+    dest = ROOT / "output" / f"us_tiles_{args.k}_{args.palette}.png"
     img.save(dest)
     tick(f"saved -> {dest.relative_to(ROOT)}  ({W}x{H}, {ncol}-colour, palette={args.palette})")
 
     if args.html:
         tick("building state-overlap hover HTML ...")
         panel2 = bn._build_panel(bn.CONUS, S, "albers")          # cheap: projections only
-        hdest = ROOT / "output" / f"us_popmosaic_{args.k}_{args.palette}.html"
+        hdest = ROOT / "output" / f"us_tiles_{args.k}_{args.palette}.html"
         export_interactive_us(hdest, base_rgb, big, nbig, cpop, panel2["to_px"],
                               panel2["feats"], "One million Americans per tile")
         tick(f"interactive -> {hdest.relative_to(ROOT)}")

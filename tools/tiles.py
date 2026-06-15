@@ -1,4 +1,4 @@
-"""Equal-population mosaic: tile a state so every tessera holds ~k real residents.
+"""Equal-population tiling: tile a state so every tessera holds ~k real residents.
 
 The 2D analog of a pavement plot. A pavement plot slices a 1D range into equal-share
 boxes, so box WIDTH shrinks where data is dense. Here we slice a 2D map into equal-share
@@ -11,7 +11,7 @@ weighted centroids -- where people actually are inside each block group). A bloc
 P people emits round(P/k) seeds, so total population is conserved and each Voronoi cell ends
 up holding ~k residents. Randomness only perturbs a tile's shape, never the density.
 
-    python tools/pop_mosaic.py Maryland --k 2000 --height 1600 --family quads
+    python tools/tiles.py Maryland --k 2000 --height 1600 --family quads
 """
 import argparse
 import base64
@@ -565,7 +565,7 @@ def _png_uri(arr):
 
 
 def export_interactive(dest, base_rgb, big, nbig, pop_lab, to_px, W, H, title):
-    """Write a self-contained hover HTML: the mosaic + a pixel-accurate pick-map + per-tile
+    """Write a self-contained hover HTML: the tiling + a pixel-accurate pick-map + per-tile
     data (population, and which neighbourhood clusters it covers and by what %)."""
     # rasterise neighbourhood clusters into the tile canvas, intersect with tiles
     feats = [f for f in fetch_neighborhoods()["features"] if f.get("geometry")]
@@ -599,7 +599,7 @@ def export_interactive(dest, base_rgb, big, nbig, pop_lab, to_px, W, H, title):
                       np.zeros_like(idm, np.uint8)])
     html = _HTML_TMPL
     for k, v in {"__W__": str(W), "__H__": str(H), "__TITLE__": title,
-                 "__MOSAIC__": _png_uri(base_rgb), "__PICK__": _png_uri(pick),
+                 "__TILES__": _png_uri(base_rgb), "__PICK__": _png_uri(pick),
                  "__DATA__": json.dumps(data, separators=(",", ":"))}.items():
         html = html.replace(k, v)
     open(dest, "w").write(html)
@@ -627,7 +627,7 @@ _HTML_TMPL = r"""<!doctype html><html><head><meta charset="utf-8">
 <h1>__TITLE__</h1>
 <p class="sub">Every tile holds about the same number of people. Hover a tile to see its
 population and which neighbourhoods it covers.</p>
-<div id="stage"><img id="mos" src="__MOSAIC__" alt="population mosaic"></div>
+<div id="stage"><img id="mos" src="__TILES__" alt="population tiling"></div>
 <div id="tip"></div>
 <p class="note">Tile size = real 2020 Census block groups merged to a target headcount; colours
 are a 4-colour pattern and encode nothing. Neighbourhoods: DC Neighborhood Clusters.</p>
@@ -778,11 +778,11 @@ def main():
     lut = np.clip(lut * rng.uniform(0.9, 1.1, nbig + 1)[:, None], 0, 1)
 
     region = mask.astype(int)                                  # 1 inside, 0 outside (-> wall)
-    out = F.render_mosaic(big, nbig, region, lut, forced_grout=None, gold_class=-1,
+    out = F.render_tiles(big, nbig, region, lut, forced_grout=None, gold_class=-1,
                           grout_width=args.grout)
     out[water] = WATER                                         # paint actual rivers blue
 
-    base_rgb = (out * 255).astype(np.uint8)               # pre-legend mosaic (for hover HTML)
+    base_rgb = (out * 255).astype(np.uint8)               # pre-legend tiling (for hover HTML)
     img = Image.fromarray(base_rgb.copy())
     dlo, dhi = np.percentile(dens_lab[1:][dens_lab[1:] > 0], [2, 98])
     img = add_legend(img, sd.STATE_NAMES[ST].upper(), held, dlo, dhi, args.literal, palette, args.merge)
@@ -791,7 +791,7 @@ def main():
     if args.merge:
         suffix += f"_merge{args.merge}_{args.shape}"
     suffix += "_adj" if args.color == "adjacency" else ""
-    stem = f"{sd.STATE_NAMES[ST].replace(' ', '_')}_popmosaic{suffix}"
+    stem = f"{sd.STATE_NAMES[ST].replace(' ', '_')}_poptiling{suffix}"
     dest = ROOT / "output" / f"{stem}.png"
     img.save(dest)
     hp = np.percentile(held, [10, 50, 90])

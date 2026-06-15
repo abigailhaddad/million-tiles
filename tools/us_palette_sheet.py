@@ -11,14 +11,14 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools")); sys.path.insert(0, str(ROOT / "src"))
-import pop_mosaic as pm                                # noqa: E402
-import pop_mosaic_us as pu                             # noqa: E402
+import tiles as pm                                # noqa: E402
+import tiles_us as pu                             # noqa: E402
 import families as F                                   # noqa: E402
 
 S, K, RND, SEED = 1800, 1_000_000, 0.12, 3
 cache = ROOT / "output" / f"_us_cache2_{S}_{K}_{RND}_{SEED}.npz"
 if not cache.exists():
-    sys.exit(f"no cache {cache.name} - run: python tools/pop_mosaic_us.py --k {K} --height {S}")
+    sys.exit(f"no cache {cache.name} - run: python tools/tiles_us.py --k {K} --height {S}")
 z = np.load(cache)
 big, land, water, nbig = z["big"].astype(int), z["land"], z["water"], int(z["nbig"])
 col, ncol = pm.proper_colors(big, nbig, SEED)          # colouring is fixed; only the palette maps
@@ -34,7 +34,7 @@ def render(name):
     lut = pal[np.clip(col, 0, len(pal) - 1)].copy(); lut[col < 0] = 0
     rng = np.random.default_rng(SEED)
     lut = np.clip(lut * rng.uniform(0.94, 1.06, nbig + 1)[:, None], 0, 1)
-    out = F.render_mosaic(big, nbig, land.astype(int), lut, gold_class=-1, grout_width=1.3)
+    out = F.render_tiles(big, nbig, land.astype(int), lut, gold_class=-1, grout_width=1.3)
     out[water] = pu.WATER_C
     return Image.fromarray((np.clip(out, 0, 1) * 255).astype(np.uint8)).crop((x0, y0, x1, y1))
 

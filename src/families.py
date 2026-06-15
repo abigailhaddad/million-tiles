@@ -1,4 +1,4 @@
-"""Tile shape FAMILIES — the reusable shape vocabulary for mosaic maps.
+"""Tile shape FAMILIES — the reusable shape vocabulary for tiling maps.
 
 Every family is a generative *process* that leaves tile-shaped debris (the tone of the
 piece: nothing from a pattern book). The original three from dc_build.py plus four new
@@ -24,7 +24,7 @@ Families:
   disc     one smooth piece (the locator)
 
 compose() stitches per-class families into one seamless tessellation;
-render_mosaic() colours and shades it dc_build-style.
+render_tiles() colours and shades it dc_build-style.
 
 Run `python3 src/families.py` -> output/family_swatches.png (a contact sheet).
 """
@@ -38,7 +38,7 @@ from scipy.spatial import cKDTree
 
 ROOT = Path(__file__).resolve().parents[1]
 WALL = np.array([0.10, 0.08, 0.06])              # outside the map (dark wall)
-GROUT = np.array([0.34, 0.35, 0.29])             # warm grey, measured from the real mosaic
+GROUT = np.array([0.34, 0.35, 0.29])             # warm grey, measured from the real tiling
 
 
 # ---------------------------------------------------------------------------
@@ -397,7 +397,7 @@ def color_lut(big, nbig, region, palettes, seed=3):
     return lut, tile_region
 
 
-def render_mosaic(big, nbig, region, lut, forced_grout=None, gold_class=4, grout_width=None):
+def render_tiles(big, nbig, region, lut, forced_grout=None, gold_class=4, grout_width=None):
     """Bevel/emboss + grout, exactly dc_build's look, plus forced-grout beds.
     grout_width: if set, a fixed grout half-width in px (thin uniform lines); otherwise the
     default proportional grout (~5% of each tile's diameter)."""
@@ -463,7 +463,7 @@ def main():
         region = np.where(mask, cls, 0)
         big, nbig, forced = compose(region, {cls: name}, base, seed=7)
         lut, _ = color_lut(big, nbig, region, pal, seed=cls + 1)
-        out = render_mosaic(big, nbig, region, lut, forced)
+        out = render_tiles(big, nbig, region, lut, forced)
         im = Image.fromarray((out * 255).astype("uint8"))
         x = pad + (k % cols) * (N + pad); y = pad + (k // cols) * (N + pad + cap)
         sheet.paste(im, (x, y))

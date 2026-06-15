@@ -1,4 +1,4 @@
-"""Fetch + cache + rasterize any US state into a region map for the mosaic tool.
+"""Fetch + cache + rasterize any US state into a region map for the tiling tool.
 
 One public function, build_region(state, S), returns an int class map at height S:
     0 outside · 1 land · 2 parks · 3 water · 4 capital disc
@@ -81,7 +81,7 @@ def resolve_state(state):
 # ---------------------------------------------------------------------------
 def _post(url, params, timeout=180, retries=4):
     body = urllib.parse.urlencode(params).encode()
-    req = urllib.request.Request(url, data=body, headers={"User-Agent": "mosaic/1.0"})
+    req = urllib.request.Request(url, data=body, headers={"User-Agent": "tiling/1.0"})
     last = None
     for attempt in range(retries):                    # transient 5xx/timeout backoff (busy ArcGIS)
         try:

@@ -1,9 +1,9 @@
 # One Million Americans Per Tile
 
-Cut a place — a state, DC, or the whole country — into pieces that each hold **about the same
-number of people**, and draw them like a tile mosaic. Because every tile holds the same headcount,
-a tile's *size* becomes inverse population density: tiny where millions pack in, vast where almost
-no one lives. Tiles are coloured with the **fewest colours so no two neighbours match** (the colour
+Cut a state — or the whole country — into pieces that each hold **about the same number of
+people**. Because every tile holds the same headcount, a tile's *size* is inverse population
+density: a million people fit in a few city blocks in one place, and sprawl across half a state in
+another. Tiles are coloured with the **fewest colours so no two neighbours match** (the colour
 means nothing); rivers and lakes are blue.
 
 > **🔗 Live site: [abigailhaddad.github.io/million-tiles](https://abigailhaddad.github.io/million-tiles/)**
@@ -24,10 +24,10 @@ pip install -r requirements.txt
 ./fetch_data.sh                                   # ~14 MB of Census centers-of-population data
 
 # the whole lower-48, one tile ≈ one million people: framed print + city labels + hover page
-python tools/pop_mosaic_us.py --k 1000000 --height 1800 --palette dark --cities --html
+python tools/tiles_us.py --k 1000000 --height 1800 --palette dark --cities --html
 
 # pick another palette, or another headcount
-python tools/pop_mosaic_us.py --k 500000 --palette pastel --cities
+python tools/tiles_us.py --k 500000 --palette pastel --cities
 
 # the analyses + the palette sheet
 python tools/us_analysis.py                       # accuracy + uniqueness, nationally
@@ -50,16 +50,11 @@ Outputs land in `output/`. State boundary GeoJSON is fetched on first use and ca
    less "gerrymandered" tiles).
 4. **Colour.** A DSATUR **proper graph colouring**: the fewest colours so no two adjacent tiles
    match — the four-colour theorem in practice (planar maps need ≤4). Colour carries no data.
-5. **Render.** Mosaic-style tiles with thin grout; water despeckled/thinned and painted blue; an
-   optional framed "art print" composite. The contiguous US uses an **Albers Equal-Area**
-   projection so the country isn't north-south stretched.
+5. **Render.** Softly beveled tiles; water despeckled/thinned and painted blue; an optional framed
+   "art print" composite. The contiguous US uses an **Albers Equal-Area** projection so the country
+   isn't north-south stretched.
 
-## Two questions worth asking
-
-Because the tiles are *forced* to equal population, two things aren't obvious — and both are
-quick to measure (`tools/us_analysis.py`, national, no rendering needed).
-
-### How accurate can "equal" be?
+## How accurate can "equal" be?
 
 Each tile aims for a target headcount; how close do they actually land? The band tightens as the
 target grows, because each tile then averages over more tracts — until it hits the floor set by the
@@ -68,7 +63,7 @@ ones are nearly exact.
 
 ![accuracy vs target](docs/assets/us_accuracy.png)
 
-### Is there one way to draw the buckets, or many?
+## One way to draw them, or many?
 
 Cluster the same target from different random seeds and measure how much they agree (Rand index).
 With **many small tiles**, the equal-population + contiguity constraints pin a *near-unique* answer —
@@ -95,7 +90,7 @@ sets how round the borders are. `tools/shape_compare.py` measures that.)
 - **[Hover the country](docs/assets/national-hover.html)** — each tile shows its population and which
   states it covers, and by what %.
 
-(The same engine works on a single state from real block-group polygons via `tools/pop_mosaic.py`,
+(The same engine works on a single state from real block-group polygons via `tools/tiles.py`,
 but the live site is US-only.)
 
 ## Data sources
@@ -105,9 +100,8 @@ but the live site is US-only.)
 - **Centers of population** — 2020 Census block-group & tract population-weighted centroids.
 - **County population** — Census population estimates (also maps state code → FIPS).
 
-State / water / parks GeoJSON come from Census **TIGERweb** on demand (cached, git-ignored). DC
-neighbourhoods (hover only) come from **DC Open Data** "Neighborhood Clusters". All public domain /
-open government data.
+State / water / parks GeoJSON come from Census **TIGERweb** on demand (cached, git-ignored). All
+public domain / open government data.
 
 ## Repo layout
 
@@ -115,10 +109,10 @@ open government data.
 src/
   state_data.py     fetch + cache + rasterize any state -> region map
   build_national.py Albers CONUS projection + land/water masks
-  families.py       the tile renderer (bevel + grout)
+  families.py       the tile renderer (bevel + edges)
 tools/
-  pop_mosaic_us.py  the national tiling: tracts -> buckets -> art print + hover HTML
-  pop_mosaic.py     a single state / DC from real block-group polygons
+  tiles_us.py  the national tiling: tracts -> buckets -> art print + hover HTML
+  tiles.py     a single state from real block-group polygons
   us_analysis.py    the accuracy + uniqueness analyses (national)
   us_palette_sheet.py  every palette on the national map
   pop_sweep.py / pop_sweep_plot.py   accuracy-vs-target for one state

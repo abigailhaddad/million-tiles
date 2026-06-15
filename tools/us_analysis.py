@@ -18,8 +18,8 @@ from scipy.spatial import Delaunay
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools")); sys.path.insert(0, str(ROOT / "src"))
-import pop_mosaic as pm                                # noqa: E402
-import pop_mosaic_us as pu                             # noqa: E402
+import tiles as pm                                # noqa: E402
+import tiles_us as pu                             # noqa: E402
 import build_national as bn                            # noqa: E402
 from shape_compare import rand_index                   # noqa: E402
 

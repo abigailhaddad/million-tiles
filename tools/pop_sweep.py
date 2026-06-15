@@ -16,7 +16,7 @@ from scipy import ndimage
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT / "src"))
-import pop_mosaic as pm                                # noqa: E402
+import tiles as pm                                # noqa: E402
 import state_data as sd                                # noqa: E402
 
 

@@ -2,7 +2,7 @@
 
 A trimmed, standalone copy of the projection helpers (no green-map site builder): an Albers
 Equal-Area Conic for the lower 48 and a panel abstraction that rasterizes each state's cached
-land / water / parks polygons into a shared canvas. Reused by tools/pop_mosaic_us.py.
+land / water / parks polygons into a shared canvas. Reused by tools/tiles_us.py.
 """
 import json
 from math import cos, radians, sin, sqrt

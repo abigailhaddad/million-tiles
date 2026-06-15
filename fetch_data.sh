@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetch the public-domain US Census data the equal-population mosaics need (~14 MB).
+# Fetch the public-domain US Census data the equal-population tilings need (~14 MB).
 # Re-runnable: skips files that already exist. No API key required.
 set -euo pipefail
 cd "$(dirname "$0")/.."
