@@ -213,9 +213,34 @@ def _draw_cities(d, cities, W, ox=0, oy=0):
                stroke_width=3, stroke_fill=(15, 12, 9), anchor="lm")
 
 
+def fetch_city_uas():
+    """One Census 2020 Urban Area polygon per listed city (its built-up metro), labelled with the
+    short city name. Cached; dedups cities that share an urban area."""
+    path = sd.CACHE / "us_city_urban_areas.json"
+    if path.exists():
+        return json.load(open(path))
+    url = ("https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/"
+           "tigerWMS_Current/MapServer/88/query")
+    feats, seen = [], set()
+    for name, lat, lon in CITIES:
+        gj = sd._post(url, dict(geometry=f"{lon},{lat}", geometryType="esriGeometryPoint",
+                                inSR="4326", spatialRel="esriSpatialRelIntersects", outFields="NAME",
+                                returnGeometry="true", outSR="4326", geometryPrecision="4", f="geojson"))
+        fs = [f for f in gj.get("features", []) if f.get("geometry")]
+        if not fs or fs[0]["properties"].get("NAME", "") in seen:
+            continue
+        seen.add(fs[0]["properties"]["NAME"])
+        fs[0]["properties"]["city"] = name
+        feats.append(fs[0])
+    out = {"type": "FeatureCollection", "features": feats}
+    sd.CACHE.mkdir(parents=True, exist_ok=True)
+    json.dump(out, open(path, "w"))
+    return out
+
+
 def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
-    """Self-contained hover HTML for the national map: each tile -> population + which states it
-    covers and by what %, with a pixel-accurate pick-map (same trick as the DC version)."""
+    """Self-contained hover HTML for the national map: each tile -> population + area + which states
+    and cities it covers and by what %, with a pixel-accurate pick-map (like the DC version)."""
     H, W = big.shape
     codes = list(feats.keys())
     Ns = len(codes) + 1
@@ -229,26 +254,44 @@ def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
     px_area = 0.5 * abs(sum(bx[i] * by[(i + 1) % 4] - bx[(i + 1) % 4] * by[i] for i in range(4)))
     box_sqmi = (2 * 69.0) * (2 * 69.0 * np.cos(np.radians(39.5)))     # ~sq mi of a 2x2 deg box
     sqmi_per_px = box_sqmi / max(px_area, 1)
-    valid = (big > 0) & (stateid > 0)
-    comb = big[valid].astype(np.int64) * Ns + stateid[valid]
-    uc, cnts = np.unique(comb, return_counts=True)
-    overlap = {}
-    for code, cnt in zip(uc.tolist(), cnts.tolist()):
-        overlap.setdefault(code // Ns, []).append((code % Ns, cnt))
+    def overlaps(idmap, narea):
+        v = (big > 0) & (idmap > 0)
+        comb = big[v].astype(np.int64) * (narea) + idmap[v]
+        u, c = np.unique(comb, return_counts=True)
+        out = {}
+        for code, cnt in zip(u.tolist(), c.tolist()):
+            out.setdefault(code // narea, []).append((code % narea, cnt))
+        return out
+    state_ov = overlaps(stateid, Ns)
+
+    # city overlaps: each tile vs the metro urban areas it touches
+    uas = [f for f in fetch_city_uas()["features"] if f.get("geometry")]
+    Nc = len(uas) + 1
+    cityid = np.zeros((H, W), np.int32)
+    for ci, f in enumerate(uas, 1):
+        cityid[sd.rasterize_px([f], to_px, W, H) & (big > 0)] = ci
+    carea = np.bincount(cityid.ravel(), minlength=Nc).astype(float)
+    city_ov = overlaps(cityid, Nc)
 
     data = {}
     for t in range(1, nbig + 1):
         parts = []
-        for s, cnt in overlap.get(t, []):
-            pctT = 100 * cnt / max(tile_area[t], 1)
-            pctS = 100 * cnt / max(sarea[s], 1)
+        for s, cnt in state_ov.get(t, []):
+            pctT, pctS = 100 * cnt / max(tile_area[t], 1), 100 * cnt / max(sarea[s], 1)
             if pctT >= 2:
                 parts.append((pctT, pctS, sd.STATE_NAMES[codes[s - 1]].title()))
         parts.sort(reverse=True)
+        cities = []
+        for c, cnt in city_ov.get(t, []):
+            pctC = 100 * cnt / max(carea[c], 1)               # % of the metro that's in this tile
+            if pctC >= 2:
+                cities.append((pctC, uas[c - 1]["properties"]["city"]))
+        cities.sort(reverse=True)
         sqmi = tile_area[t] * sqmi_per_px
         data[t] = {"pop": int(round(cpop[t - 1])), "sqmi": int(round(sqmi)),
                    "dens": round(cpop[t - 1] / max(sqmi, 1), 1),
-                   "parts": [{"pctT": pm.pct1(p[0]), "pctS": pm.pct1(p[1]), "st": p[2]} for p in parts[:5]]}
+                   "parts": [{"pctT": pm.pct1(p[0]), "pctS": pm.pct1(p[1]), "st": p[2]} for p in parts[:5]],
+                   "cities": [{"pct": pm.pct1(c[0]), "name": c[1]} for c in cities[:4]]}
 
     idm = big.astype(np.uint32)
     pick = np.dstack([(idm & 255).astype(np.uint8), ((idm >> 8) & 255).astype(np.uint8),
@@ -305,6 +348,8 @@ mos.addEventListener('mousemove',e=>{
   let h='<div class="pop">&#8776; '+d.pop.toLocaleString()+' residents</div>';
   h+='<div class="row"><span class="pct">'+d.sqmi.toLocaleString()+'</span> sq mi'+
      ' <span class="nm">('+d.dens.toLocaleString()+' people / sq mi)</span></div>';
+  if(d.cities && d.cities.length){
+    for(const c of d.cities) h+='<div class="row"><span class="pct">'+c.pct+'%</span> of metro '+c.name+'</div>'; }
   if(d.parts.length){ h+='<div class="nm">covers</div>';
     for(const p of d.parts) h+='<div class="row"><span class="pct">'+p.pctS+'%</span> of '+p.st+
       ' <span class="nm">('+p.pctT+'% of this tile)</span></div>'; }
