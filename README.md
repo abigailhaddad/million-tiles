@@ -134,8 +134,8 @@ Freeman's [Fifty States with Equal Population](http://fakeisthenewreal.org/refor
 [Engaging Data / FlowingData](https://engaging-data.com/splitting-us-by-population/) "split the US by
 population" interactives, Slate's Equal Population Mapper, and capacity-constrained Voronoi /
 automated-redistricting methods generally. What's different here is the **granularity** — hundreds of
-tiles, so it reads as a texture rather than a few regions — the **art-first execution**, and the
-analysis of *how accurate* and *how unique* the bucketings are.
+tiles, so it reads as a texture rather than a few regions — and the analysis of *how accurate* and
+*how unique* the bucketings are.
 
 ## License
 
