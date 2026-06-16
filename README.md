@@ -10,7 +10,7 @@ means nothing); rivers and lakes are blue.
 
 ![the contiguous US as equal-population tiles](docs/assets/national.png)
 
-It's a fine-grained take on an old idea — see [Prior art](#prior-art). Everything is
+It's a fine-grained take on an old idea — see [Prior work](#prior-work). Everything is
 built from public-domain US Census data; no API key.
 
 ## Quick start
@@ -51,7 +51,7 @@ Outputs land in `output/`. State boundary GeoJSON is fetched on first use and ca
    less "gerrymandered" tiles).
 4. **Colour.** A DSATUR **proper graph colouring**: the fewest colours so no two adjacent tiles
    match — the four-colour theorem in practice (planar maps need ≤4). Colour carries no data.
-5. **Render.** Softly beveled tiles; water despeckled/thinned and painted blue; an optional framed
+5. **Render.** Softly beveled tiles; water despeckled/thinned and painted blue; an optional
    framed-print composite. The contiguous US uses an **Albers Equal-Area** projection so the country
    isn't north-south stretched.
 
@@ -64,7 +64,6 @@ per tile it's essentially exact.
 **But the published map isn't that tight, on purpose.** Forcing every tile to be *exactly* a million
 stretches them into thin, gerrymandered shapes, so the render trades a little equality for rounder
 tiles (`compactify` + `repair_outliers`): most tiles land within ±5% of a million and none past ±10%.
-The chart below is the best case; the map is the compromise.
 
 ![accuracy vs target](docs/assets/us_accuracy.png)
 
@@ -127,7 +126,7 @@ data/               Census inputs (git-ignored; ./fetch_data.sh)
 output/             renders (git-ignored)
 ```
 
-## Prior art
+## Prior work
 
 Partitioning a place into equal-population pieces is an old idea. The closest relatives are Neil
 Freeman's [Fifty States with Equal Population](http://fakeisthenewreal.org/reform/), the
