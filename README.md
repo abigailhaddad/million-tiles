@@ -41,8 +41,8 @@ Outputs land in `output/`. State boundary GeoJSON is fetched on first use and ca
 
 1. **Units.** Census *block groups* (~1,500 people, with polygons) for a state; *tract centers of
    population* (~4,000 people, just points) for the nation. Census *blocks* are finer still (often a
-   single city block), but there are ~8 million of them — far too many to cluster — so tracts are
-   the practical floor.
+   single city block), but there are ~8 million of them, and the clustering doesn't scale to that
+   many — so tracts are the practical floor.
 2. **Adjacency.** Block-group polygons give it directly; the national point set uses a Delaunay
    triangulation of the projected tract centres.
 3. **Bucketing.** Grow contiguous clusters to a target headcount (`regionalize`), move border units

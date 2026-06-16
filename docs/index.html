@@ -57,8 +57,8 @@
   <h2>How it's built</h2>
   <ol>
     <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each). A finer unit
-      exists — census blocks, often a single city block — but there are ~8 million of them, far too
-      many to partition; tracts are the practical floor.</li>
+      exists — census blocks, often a single city block — but there are ~8 million of them, and the
+      clustering doesn't scale to that many; tracts are the practical floor.</li>
     <li><b>Bucketing.</b> Grow contiguous clusters to a target headcount, then move border tracts
       to equalise population and gently round the shapes in.</li>
     <li><b>Colour.</b> The fewest colours so no two neighbouring tiles match.</li>
