@@ -58,19 +58,18 @@
   <h2>How it's built</h2>
   <ol>
     <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each). A finer unit
-      exists — census blocks, ~tens of people — but there are tens of millions of them, far too many
-      to partition; tracts are the practical floor.</li>
+      exists — census blocks, often a single city block — but there are ~8 million of them, far too
+      many to partition; tracts are the practical floor.</li>
     <li><b>Bucketing.</b> Grow contiguous clusters to a target headcount, then move border tracts
       to equalise population and gently round the shapes in.</li>
-    <li><b>Colour.</b> The fewest colours so no two neighbouring tiles match — the four-colour
-      theorem in action. Colour means nothing.</li>
-    <li><b>Render.</b> Softly beveled tiles; rivers and lakes in blue.</li>
+    <li><b>Colour.</b> The fewest colours so no two neighbouring tiles match.</li>
   </ol>
 
   <h2>How equal <em>can</em> they be?</h2>
-  <p class="mut">If you optimize for equality alone, very: the band below tightens as the target
-  grows — each tile averages over more tracts — until it hits the floor set by the ~4,000-person
-  tract. Above ~150k people per tile it's essentially exact.</p>
+  <p class="mut">The bigger you make each tile, the more exactly equal you can get — every tile
+  averages over more census tracts, so its population lands closer to the target. Above about
+  150,000 people per tile they're essentially exact; only very small tiles (a few tracts each)
+  leave real slack. The chart below shows the spread at each target size:</p>
   <figure>
     <img src="assets/us_accuracy.png" alt="Population band vs target headcount, nationally">
     <figcaption>Best-case tile population, as a % of its target, across the whole US.</figcaption>
@@ -78,11 +77,10 @@
   <p class="mut"><b>But the map at the top of this page isn't that tight on purpose.</b> Forcing
   every tile to be <em>exactly</em> a million makes them stretch out into thin, gerrymandered
   shapes. So the displayed map trades a little equality for rounder tiles: most land within ±5% of a
-  million, and none are allowed past ±10%. The chart is what's possible; the map is the compromise.</p>
+  million, and none are allowed past ±10%.</p>
 
   <h2>Is there one right map? No.</h2>
-  <p class="mut">Re-roll the random seed and you get a different — equally valid — bucketing. Same
-  target, two seeds; both legitimate, the seams just fall differently:</p>
+  <p class="mut">Re-roll the random seed and you get a different — equally valid — bucketing:</p>
   <figure>
     <img src="assets/us_two_bucketings.png" alt="two equally valid bucketings of the US">
     <figcaption>~6M people per tile, 55 tiles, two random seeds.</figcaption>
