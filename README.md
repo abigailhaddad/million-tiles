@@ -10,7 +10,7 @@ means nothing); rivers and lakes are blue.
 
 ![the contiguous US as equal-population tiles](docs/assets/national.png)
 
-It's a fine-grained, art-leaning take on an old idea — see [Prior art](#prior-art). Everything is
+It's a fine-grained take on an old idea — see [Prior art](#prior-art). Everything is
 built from public-domain US Census data; no API key.
 
 ## Quick start
@@ -52,7 +52,7 @@ Outputs land in `output/`. State boundary GeoJSON is fetched on first use and ca
 4. **Colour.** A DSATUR **proper graph colouring**: the fewest colours so no two adjacent tiles
    match — the four-colour theorem in practice (planar maps need ≤4). Colour carries no data.
 5. **Render.** Softly beveled tiles; water despeckled/thinned and painted blue; an optional framed
-   "art print" composite. The contiguous US uses an **Albers Equal-Area** projection so the country
+   framed-print composite. The contiguous US uses an **Albers Equal-Area** projection so the country
    isn't north-south stretched.
 
 ## How equal *can* they be?
@@ -116,7 +116,7 @@ src/
   build_national.py Albers CONUS projection + land/water masks
   families.py       the tile renderer (bevel + edges)
 tools/
-  tiles_us.py  the national tiling: tracts -> buckets -> art print + hover HTML
+  tiles_us.py  the national tiling: tracts -> buckets -> framed print + hover HTML
   tiles.py     a single state from real block-group polygons
   us_analysis.py    the accuracy + uniqueness analyses (national)
   us_palette_sheet.py  every palette on the national map
