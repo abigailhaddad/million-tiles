@@ -306,6 +306,7 @@ def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
 
 _HTML_US = r"""<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>__TITLE__</title>
+<script>if(window.top!==window.self)document.documentElement.className='embed';</script>
 <style>
  :root{--bg:#17120d;--ink:#ece4d6;--mut:#9a8f7c;--gold:#e0c06e}
  *{box-sizing:border-box} html,body{margin:0;background:var(--bg);color:var(--ink);
@@ -321,14 +322,14 @@ _HTML_US = r"""<!doctype html><html><head><meta charset="utf-8">
  #tip .pop{color:var(--gold);font-size:16px;margin-bottom:6px}
  #tip .row{margin:3px 0} #tip .pct{color:var(--gold);font-weight:600} #tip .nm{color:var(--mut);font-size:13px}
  .note{color:var(--mut);font-size:13px;margin-top:14px}
+ .embed h1,.embed .sub,.embed .note{display:none} .embed .wrap{padding:8px 12px}
 </style></head><body><div class="wrap">
 <h1>One million Americans per tile</h1>
 <p class="sub">The contiguous US split into equal-population tiles. Hover a tile for its population and
 states.</p>
 <div id="stage"><img id="mos" src="__TILES__" alt="equal-population tile map of the United States"></div>
 <div id="tip"></div>
-<p class="note">Tiles are groups of 2020 Census tracts holding ~1,000,000 people each; they cross
-state lines. Colours are a four-colour map and carry no meaning.</p>
+<p class="note">Tiles are groups of 2020 Census tracts holding ~1,000,000 people each.</p>
 </div>
 <canvas id="pk" width="__W__" height="__H__" style="display:none"></canvas>
 <script>
