@@ -95,9 +95,9 @@
 
   <h2>Rectangles, not blobs</h2>
   <p>The map at the top grows blobby regions. There's a completely different way to do it: rectangles.
-  Cut the country into vertical strips that each hold a million people, then cut each strip into stacked
-  cells that hold a million too. Same rule — equal population per tile — just boxes instead of blobs.
-  (This is the version Aaron's pavement library actually makes.)</p>
+  Split the country into vertical strips, then slice each strip into stacked cells, placing every cut so
+  that each final cell holds a million people. Same rule — equal population per tile — just boxes instead
+  of blobs. (This is the version Aaron's pavement library actually makes.)</p>
   <figure>
     <iframe src="assets/rect-hover.html" title="Hover the rectangular pavement"
             loading="lazy" class="hero-frame"></iframe>
