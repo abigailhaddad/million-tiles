@@ -93,6 +93,23 @@
     <figcaption>Agreement between random seeds at the same target (100% = identical buckets).</figcaption>
   </figure>
 
+  <h2>Rectangles, not blobs</h2>
+  <p>The map at the top grows blobby regions. There's a completely different way to do it: rectangles.
+  Cut the country into vertical strips that each hold a million people, then cut each strip into stacked
+  cells that hold a million too. Same rule — equal population per tile — just boxes instead of blobs.
+  (This is the version Aaron's pavement library actually makes.)</p>
+  <figure>
+    <iframe src="assets/rect-hover.html" title="Hover the rectangular pavement"
+            loading="lazy" class="hero-frame"></iframe>
+    <figcaption><b>Hover any cell</b> — same info as the map up top. ·
+    <a href="assets/rect-hover.html">full-screen</a></figcaption>
+  </figure>
+  <p>It works because of one assumption: that the people inside each little Census area are spread
+  evenly across it. Once you assume that, population becomes something continuous you can slice
+  anywhere — so a rectangle's edge can run straight through a neighborhood and still leave exactly a
+  million people on each side. The blobby version can't do that; it can only cut between whole areas,
+  never through one.</p>
+
   <hr>
   <h2>Prior work</h2>
   <p class="mut">Partitioning a place into equal-population pieces is an old idea. The closest
