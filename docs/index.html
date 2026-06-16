@@ -42,9 +42,6 @@
 
   <header>
     <h1>One Million Americans Per Tile</h1>
-    <p class="tag">The contiguous United States cut into 329 pieces that each hold about the same
-    number of people. A tile's <em>size</em> is inverse population density — a million people fit in
-    a few city blocks in one place, and sprawl across half a state in another.</p>
   </header>
 
   <figure>
@@ -60,8 +57,10 @@
 
   <h2>How it's built</h2>
   <ol>
-    <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each) — the
-      practical finest nationwide unit.</li>
+    <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each). There's a
+      finer unit — census blocks, ~tens of people each — but there are tens of millions of them
+      nationally, which makes partitioning far too computationally heavy. Tracts are the practical
+      floor.</li>
     <li><b>Bucketing.</b> Grow contiguous clusters to a target headcount, then move border tracts
       to equalise population and gently round the shapes in.</li>
     <li><b>Colour.</b> The fewest colours so no two neighbouring tiles match — the four-colour
@@ -69,15 +68,18 @@
     <li><b>Render.</b> Softly beveled tiles; rivers and lakes in blue.</li>
   </ol>
 
-  <h2>How accurate can "equal" be?</h2>
-  <p class="mut">Each tile aims for a target headcount; the band shows where they actually land.
-  It tightens as the target grows — each tile then averages over more tracts — until it hits the
-  floor set by the ~4,000-person tract atom. Nationally, anything from ~150k people per tile up is
-  near-exact; only small targets (a tile is just a few tracts) are loose.</p>
+  <h2>How equal <em>can</em> they be?</h2>
+  <p class="mut">If you optimize for equality alone, very: the band below tightens as the target
+  grows — each tile averages over more tracts — until it hits the floor set by the ~4,000-person
+  tract. Above ~150k people per tile it's essentially exact.</p>
   <figure>
     <img src="assets/us_accuracy.png" alt="Population band vs target headcount, nationally">
-    <figcaption>Tile population as a % of its target, across the whole US.</figcaption>
+    <figcaption>Best-case tile population, as a % of its target, across the whole US.</figcaption>
   </figure>
+  <p class="mut"><b>But the map at the top of this page isn't that tight on purpose.</b> Forcing
+  every tile to be <em>exactly</em> a million makes them stretch out into thin, gerrymandered
+  shapes. So the displayed map trades a little equality for rounder tiles: most land within ±5% of a
+  million, and none are allowed past ±10%. The chart is what's possible; the map is the compromise.</p>
 
   <h2>One way to draw them, or many?</h2>
   <p class="mut">Cluster the same target from different random seeds and measure how much they

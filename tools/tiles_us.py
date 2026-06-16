@@ -224,6 +224,11 @@ def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
         stateid[sd.rasterize_px(feats[ST], to_px, W, H) & (big > 0)] = si
     sarea = np.bincount(stateid.ravel(), minlength=Ns).astype(float)
     tile_area = np.bincount(big.ravel(), minlength=nbig + 1).astype(float)
+    # sq miles per pixel (Albers is equal-area, so it's constant): measure a 2x2 deg box
+    bx, by = to_px(np.array([-97., -95., -95., -97.]), np.array([38.5, 38.5, 40.5, 40.5]))
+    px_area = 0.5 * abs(sum(bx[i] * by[(i + 1) % 4] - bx[(i + 1) % 4] * by[i] for i in range(4)))
+    box_sqmi = (2 * 69.0) * (2 * 69.0 * np.cos(np.radians(39.5)))     # ~sq mi of a 2x2 deg box
+    sqmi_per_px = box_sqmi / max(px_area, 1)
     valid = (big > 0) & (stateid > 0)
     comb = big[valid].astype(np.int64) * Ns + stateid[valid]
     uc, cnts = np.unique(comb, return_counts=True)
@@ -240,7 +245,9 @@ def export_interactive_us(dest, base_rgb, big, nbig, cpop, to_px, feats, title):
             if pctT >= 2:
                 parts.append((pctT, pctS, sd.STATE_NAMES[codes[s - 1]].title()))
         parts.sort(reverse=True)
-        data[t] = {"pop": int(round(cpop[t - 1])),
+        sqmi = tile_area[t] * sqmi_per_px
+        data[t] = {"pop": int(round(cpop[t - 1])), "sqmi": int(round(sqmi)),
+                   "dens": round(cpop[t - 1] / max(sqmi, 1), 1),
                    "parts": [{"pctT": pm.pct1(p[0]), "pctS": pm.pct1(p[1]), "st": p[2]} for p in parts[:5]]}
 
     idm = big.astype(np.uint32)
@@ -296,6 +303,8 @@ mos.addEventListener('mousemove',e=>{
   const id=idAt(e), d=DATA[id];
   if(!d){tip.style.display='none';return;}
   let h='<div class="pop">&#8776; '+d.pop.toLocaleString()+' residents</div>';
+  h+='<div class="row"><span class="pct">'+d.sqmi.toLocaleString()+'</span> sq mi'+
+     ' <span class="nm">('+d.dens.toLocaleString()+' people / sq mi)</span></div>';
   if(d.parts.length){ h+='<div class="nm">covers</div>';
     for(const p of d.parts) h+='<div class="row"><span class="pct">'+p.pctS+'%</span> of '+p.st+
       ' <span class="nm">('+p.pctT+'% of this tile)</span></div>'; }

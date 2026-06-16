@@ -40,8 +40,9 @@ Outputs land in `output/`. State boundary GeoJSON is fetched on first use and ca
 ## How it's built
 
 1. **Units.** Census *block groups* (~1,500 people, with polygons) for a state; *tract centers of
-   population* (~4,000 people, just points) for the nation. Blocks (~8 M) are finer but aren't
-   published as a centers-of-population file, so tracts are the practical floor.
+   population* (~4,000 people, just points) for the nation. Census *blocks* are finer still (~tens of
+   people), but there are tens of millions of them — partitioning that many is far too
+   computationally heavy — so tracts are the practical floor.
 2. **Adjacency.** Block-group polygons give it directly; the national point set uses a Delaunay
    triangulation of the projected tract centres.
 3. **Bucketing.** Grow contiguous clusters to a target headcount (`regionalize`), move border units
@@ -54,12 +55,16 @@ Outputs land in `output/`. State boundary GeoJSON is fetched on first use and ca
    "art print" composite. The contiguous US uses an **Albers Equal-Area** projection so the country
    isn't north-south stretched.
 
-## How accurate can "equal" be?
+## How equal *can* they be?
 
-Each tile aims for a target headcount; how close do they actually land? The band tightens as the
-target grows, because each tile then averages over more tracts — until it hits the floor set by the
-~4,000-person tract atom. Small targets (a tile is only a few tracts) are inherently loose; large
-ones are nearly exact.
+If you optimise for equality alone, very. The band tightens as the target grows — each tile averages
+over more tracts — until it hits the floor set by the ~4,000-person tract atom; above ~150k people
+per tile it's essentially exact.
+
+**But the published map isn't that tight, on purpose.** Forcing every tile to be *exactly* a million
+stretches them into thin, gerrymandered shapes, so the render trades a little equality for rounder
+tiles (`compactify` + `repair_outliers`): most tiles land within ±5% of a million and none past ±10%.
+The chart below is the best case; the map is the compromise.
 
 ![accuracy vs target](docs/assets/us_accuracy.png)
 
