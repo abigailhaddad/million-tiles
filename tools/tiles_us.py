@@ -365,6 +365,8 @@ def main():
     ap.add_argument("--round", type=float, default=0.12,
                     help="compactness tolerance: tiles round up while staying within +-this of K "
                          "(0 = off, keep exact-population tendrils)")
+    ap.add_argument("--clamp", type=float, default=0.10,
+                    help="hard cap on per-tile deviation: chain-repair every tile into +-this of K")
     ap.add_argument("--palette", choices=list(PALETTES), default="ember")
     ap.add_argument("--no-art", action="store_true", help="plain band instead of the framed art print")
     ap.add_argument("--cities", action="store_true", help="label major cities to orient the map")
@@ -377,7 +379,7 @@ def main():
     tick = lambda m: print(f"[{time.time()-t0:5.1f}s] {m}", flush=True)
 
     # the slow part (land mask + cluster + voronoi) is cached so palette swaps are instant
-    cache = ROOT / "output" / f"_us_cache2_{S}_{args.k}_{args.round}_{args.seed}.npz"
+    cache = ROOT / "output" / f"_us_cache3_{S}_{args.k}_{args.round}_{args.clamp}_{args.seed}.npz"
     if cache.exists() and not args.no_cache:
         tick(f"loading cached clustering ({cache.name}) ...")
         z = np.load(cache)
@@ -411,6 +413,7 @@ def main():
         cl = pm.balance(cl, nb, pop1, args.k, iters=10, seed=args.seed)
         if args.round > 0:
             cl = pm.compactify(cl, nb, pop1, args.k, cent, iters=8, tol=args.round, seed=args.seed)
+        cl = pm.repair_outliers(cl, nb, pop1, args.k, band=args.clamp)   # kill the boxed-in tails
         uniq = np.unique(cl[cl > 0])
         relab = np.zeros(int(cl.max()) + 1, int); relab[uniq] = np.arange(1, len(uniq) + 1)
         cl = relab[cl]; M = len(uniq)

@@ -469,6 +469,62 @@ def compactify(cl, nb, pop, K, cent, iters=8, tol=0.12, seed=0):
     return cl
 
 
+def repair_outliers(cl, nb, pop, K, band=0.10, max_passes=2000):
+    """Fix the few geographically boxed tiles that plain balancing can't: shuttle one boundary
+    unit at a time along a path from a SURPLUS tile to the most-starved tile, so the deficit
+    migrates out to where there's slack. Clamps every tile into [K*(1-band), K*(1+band)]."""
+    from collections import deque
+    M = int(cl.max())
+    members = [set() for _ in range(M + 1)]
+    for i in range(1, len(cl)):
+        if cl[i] > 0:
+            members[cl[i]].add(i)
+    cpop = np.bincount(cl, weights=pop, minlength=M + 1)
+    lo, hi = K * (1 - band), K * (1 + band)
+    spare = pop[1:].mean() if len(pop) > 1 else 0
+
+    def tneigh(c):
+        s = set()
+        for i in members[c]:
+            for j in nb[i]:
+                if cl[j] != c and cl[j] > 0:
+                    s.add(cl[j])
+        return s
+
+    for _ in range(max_passes):
+        u = int(np.argmin(cpop[1:])) + 1
+        o = int(np.argmax(cpop[1:])) + 1
+        if cpop[u] >= lo and cpop[o] <= hi:
+            break
+        target, surplus = (u, True) if cpop[u] < lo else (o, False)   # fix worse end first
+        # BFS over tile-adjacency from target to the nearest tile that can give/take
+        prev = {target: target}; dq = deque([target]); src = None
+        while dq:
+            c = dq.popleft()
+            if c != target and ((surplus and cpop[c] > K + spare) or (not surplus and cpop[c] < K - spare)):
+                src = c; break
+            for d in tneigh(c):
+                if d not in prev:
+                    prev[d] = c; dq.append(d)
+        if src is None:
+            break
+        path = [src]
+        while path[-1] != target:
+            path.append(prev[path[-1]])
+        if not surplus:                                               # draining an over-full tile
+            path = path[::-1]                                          # move units target -> ... -> src
+        moved = False
+        for a, b in zip(path, path[1:]):                              # a hands one unit to b
+            for i in [k for k in members[a] if any(cl[j] == b for j in nb[k])]:
+                if len(members[a]) > 1 and _connected(members[a] - {i}, nb):
+                    cl[i] = b; members[a].discard(i); members[b].add(i)
+                    cpop[a] -= pop[i]; cpop[b] += pop[i]; moved = True
+                    break
+        if not moved:
+            break
+    return cl
+
+
 def _font(size, bold=False):
     names = (["/System/Library/Fonts/Supplemental/Georgia Bold.ttf", "/System/Library/Fonts/HelveticaNeue.ttc"]
              if bold else ["/System/Library/Fonts/Supplemental/Georgia.ttf", "/System/Library/Fonts/Helvetica.ttc"])
