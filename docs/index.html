@@ -57,10 +57,9 @@
 
   <h2>How it's built</h2>
   <ol>
-    <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each). There's a
-      finer unit — census blocks, ~tens of people each — but there are tens of millions of them
-      nationally, which makes partitioning far too computationally heavy. Tracts are the practical
-      floor.</li>
+    <li><b>Units.</b> Census tract <em>centers of population</em> (~4,000 people each). A finer unit
+      exists — census blocks, ~tens of people — but there are tens of millions of them, far too many
+      to partition; tracts are the practical floor.</li>
     <li><b>Bucketing.</b> Grow contiguous clusters to a target headcount, then move border tracts
       to equalise population and gently round the shapes in.</li>
     <li><b>Colour.</b> The fewest colours so no two neighbouring tiles match — the four-colour
@@ -81,34 +80,21 @@
   shapes. So the displayed map trades a little equality for rounder tiles: most land within ±5% of a
   million, and none are allowed past ±10%. The chart is what's possible; the map is the compromise.</p>
 
-  <h2>One way to draw them, or many?</h2>
-  <p class="mut">Cluster the same target from different random seeds and measure how much they
-  agree. With <b>many small tiles</b> the equal-population + contiguity constraints pin a
-  near-unique answer; with <b>few big tiles</b> real freedom opens up and different seeds find
-  different, equally-valid bucketings. So "how many ways are there?" depends on how big you make
-  the pieces.</p>
+  <h2>Is there one right map? No.</h2>
+  <p class="mut">Re-roll the random seed and you get a different — equally valid — bucketing. Same
+  target, two seeds; both legitimate, the seams just fall differently:</p>
+  <figure>
+    <img src="assets/us_two_bucketings.png" alt="two equally valid bucketings of the US">
+    <figcaption>~6M people per tile, 55 tiles, two random seeds.</figcaption>
+  </figure>
+  <p class="mut">The tiles grow from randomly-ordered starting points, and the equalising tweaks run
+  in random order too, so the seed decides where buckets start and how ties break. How much that
+  matters depends on tile size: with thousands of small tiles the constraints pin a near-unique
+  answer; with a few dozen big ones, seeds genuinely diverge.</p>
   <figure>
     <img src="assets/us_uniqueness.png" alt="Partition agreement vs target headcount">
     <figcaption>Agreement between random seeds at the same target (100% = identical buckets).</figcaption>
   </figure>
-
-  <h2>Different ways to draw it</h2>
-  <p class="mut">There's no single "right" map. Re-roll the random seed and you get a different —
-  equally valid — equal-population bucketing:</p>
-  <figure>
-    <img src="assets/us_two_bucketings.png" alt="two equally valid bucketings of the US">
-    <figcaption>Same target (~6M people per tile, 55 tiles), two seeds. Both legitimate; the seams
-    fall differently.</figcaption>
-  </figure>
-  <p class="mut"><b>Why does the seed change the map?</b> The tiles are grown one at a time from
-  randomly-ordered starting points, and the population-equalising tweaks are then applied in random
-  order too — so the seed decides <em>where</em> the buckets start and <em>how</em> ties are broken.
-  Because there's no unique equal-population partition (many are equally valid), different seeds
-  settle on different ones. With many small tiles the constraints are so tight that nearly every
-  seed lands on almost the same answer; with a few big tiles, there's real room to differ — which is
-  exactly what the agreement curve above measures.</p>
-  <p class="mut">(The colour is purely an aesthetic choice — it carries no data, and there are a
-  dozen built-in palettes to pick from.)</p>
 
   <hr>
   <h2>Prior art</h2>
