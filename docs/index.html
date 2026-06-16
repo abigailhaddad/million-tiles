@@ -47,11 +47,10 @@
   <figure>
     <iframe src="assets/national-hover.html" title="Hover the live US tile map"
             loading="lazy" class="hero-frame"></iframe>
-    <figcaption><b>Hover any tile</b> to see its population and which states it covers — or
-    <a href="assets/national-hover.html">open it full-screen</a> ·
-    <a href="assets/national.png">download the print</a>.<br>329 tiles · each ≈ 1,000,000 residents
-    (middle half 881k–1,118k). <b>Data: 2020 U.S. Census</b> (tract centers of population), Albers
-    Equal-Area projection.</figcaption>
+    <figcaption><b>Hover any tile</b> for its population, area, and the states it spans ·
+    <a href="assets/national-hover.html">full-screen</a> ·
+    <a href="assets/national.png">download the print</a>.<br>329 tiles, each ≈ 1,000,000 residents
+    (middle half 951k–1,049k). <b>Data: 2020 U.S. Census</b>, Albers projection.</figcaption>
   </figure>
 
 
@@ -69,7 +68,7 @@
   <p class="mut">The bigger you make each tile, the more exactly equal you can get — every tile
   averages over more census tracts, so its population lands closer to the target. Above about
   150,000 people per tile they're essentially exact; only very small tiles (a few tracts each)
-  leave real slack. The chart below shows the spread at each target size:</p>
+  leave real slack.</p>
   <figure>
     <img src="assets/us_accuracy.png" alt="Population band vs target headcount, nationally">
     <figcaption>Best-case tile population, as a % of its target, across the whole US.</figcaption>
@@ -104,13 +103,8 @@
   here is the granularity — hundreds of tiles, so it reads as a texture rather than a few regions —
   and the art-first execution.</p>
 
-  <p>
-    <span class="pill">2020 US Census · public domain</span>
-    <span class="pill">code: numpy · scipy · pillow</span>
-    <span class="pill">MIT licensed</span>
-  </p>
-
-  <footer>Built from public-domain US Census data. Source &amp; method in the project README.</footer>
+  <footer>Public-domain US Census data · code, method &amp; license (MIT):
+    <a href="https://github.com/abigailhaddad/million-tiles">github.com/abigailhaddad/million-tiles</a></footer>
 
 </div>
 </body>
