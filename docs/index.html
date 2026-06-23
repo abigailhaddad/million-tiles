@@ -94,21 +94,59 @@
   </figure>
 
   <h2>Rectangles, not blobs</h2>
-  <p>The map at the top grows blobby regions. There's a completely different way to do it: rectangles.
-  Split the country into vertical strips, then slice each strip into stacked cells, placing every cut so
-  that each final cell holds a million people. Same rule — equal population per tile — just boxes instead
-  of blobs. (This is the version Aaron's pavement library actually makes.)</p>
+  <p>The map at the top grows blobby regions out of whole Census blocks. There's a completely different
+  way to do it: rectangles. Stop treating blocks as the units — instead assume each block's people are
+  spread evenly across it, then split the country into vertical strips and slice each strip into stacked
+  cells, placing every cut so that each final cell holds a million people. Same rule — equal population
+  per tile — just boxes instead of blobs, and cuts that can run straight through a block instead of only
+  between them. (This is the version Aaron's pavement library actually makes.)</p>
   <figure>
     <iframe src="assets/rect-hover.html" title="Hover the rectangular pavement"
             loading="lazy" class="hero-frame"></iframe>
     <figcaption><b>Hover any cell</b> — same info as the map up top. ·
     <a href="assets/rect-hover.html">full-screen</a></figcaption>
   </figure>
-  <p>It works because of one assumption: that the people inside each little Census area are spread
-  evenly across it. Once you assume that, population becomes something continuous you can slice
-  anywhere — so a rectangle's edge can run straight through a neighborhood and still leave exactly a
-  million people on each side. The blobby version can't do that; it can only cut between whole areas,
-  never through one.</p>
+  <p>That even-spread assumption is what makes it work: once population is continuous, you can slice it
+  anywhere — a rectangle's edge can run through the middle of a block and still leave exactly a million
+  people on each side. The blobby version can't, because it keeps blocks whole; it can only cut between
+  them, never through one.</p>
+
+  <hr>
+  <h2>Does the seeding strategy matter?</h2>
+  <p class="mut">The blob map grows tiles from randomly-ordered starting points. Alex asked
+  whether a smarter seed order would produce rounder, less "gerrymandered" tiles.
+  Three strategies on the same Census data:</p>
+  <ul style="color:#ded6c8">
+    <li><b>Random order</b> — what the site ships: shuffle all ~83,000 tract centers, then
+      grow each unclaimed one into a tile.</li>
+    <li><b>Density-first</b> — seed the densest tracts first, on the theory that urban cores
+      close off into compact tiles before the surrounding suburbia claims them.</li>
+    <li><b>Recursive bisection</b> — repeatedly split the country along its long axis at the
+      population-weighted median; never grows blobs at all.</li>
+  </ul>
+  <p class="mut">Compactness is measured by <em>moment-of-inertia score</em> — (Area²/2π) ÷ Σr²
+  about each tile's centroid. A perfect disk scores 1.0; tendrilly or elongated shapes score lower.
+  (Polsby–Popper, the classic redistricting metric, is staircase-biased on rasters and barely
+  discriminates between strategies, so MOI leads.)</p>
+  <figure>
+    <img src="assets/seeding_compactness.png" alt="Compactness distribution by seeding strategy">
+    <figcaption>MOI compactness after population-balancing. Dashed line at 0.30 = "gerrymandered"
+    threshold. Density-first is modestly better; recursive bisection is worst.</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/seeding_maps.png" alt="Tile maps for each seeding strategy">
+    <figcaption>Same data, three strategies. RCB's rectangular slices are visually obvious.</figcaption>
+  </figure>
+  <p class="mut">Density-first is mildly better: ~3% higher median compactness, ~15% fewer
+  gerrymandered tiles, and tighter population equality (CV 0.084 vs 0.094). The "Vatican city"
+  prediction also holds in spirit — seeding a dense core first lets it close off as a small
+  self-contained tile before the suburbs claim it.</p>
+  <p class="mut">Recursive bisection has near-perfect equal population (CV &lt; 0.005) but is
+  the <em>least</em> compact strategy: axis-aligned cuts produce elongated rectangles, not blobs.
+  Its win is precision, not shape.</p>
+  <p class="mut">The upshot: seeding order matters a little, not a lot. Switching to density-first
+  would nudge the map toward rounder tiles, but the improvement is incremental — the equalising
+  pass after seeding is the bigger factor in final tile shape.</p>
 
   <hr>
   <h2>Prior work</h2>
