@@ -161,6 +161,26 @@
          style="max-width:520px;display:block;margin:0 auto">
     <figcaption>Each row has the same MOI score.</figcaption>
   </figure>
+  <p class="mut">Any single metric is easy to fool. Each row below shows one metric's blind spot:
+  a normal compact shape alongside two "cheat" shapes that pass the metric while still looking
+  gerrymandered. The last row shows what slips through all three at once.</p>
+  <ul class="mut" style="margin:0 0 16px">
+    <li><b>MOI</b> is blind to jagged edges and smooth concavities — a comb and a crescent both pass.</li>
+    <li><b>Convex hull ratio</b> is blind to elongation — a compact horseshoe, an elongated notch, and
+    a crenellated strip all score CH = 0.90 despite looking very different.</li>
+    <li><b>Polsby-Popper</b> is blind to smooth deep concavities — a thick arc and a horseshoe pass
+    because their curved edges are perimeter-efficient.</li>
+    <li><b>All three together</b> still miss the diagonal loophole: a parallelogram is perfectly convex
+    (CH = 1.00), not elongated (MOI ≈ 0.50), and has smooth edges (PP ≈ 0.51), but it slices through
+    a geographic grid at an odd angle.</li>
+  </ul>
+  <figure>
+    <img src="assets/three_metrics.png"
+         alt="Four rows of three shapes each; each row shows one metric's blind spots — shapes that pass the threshold but still look gerrymandered"
+         style="max-width:560px;display:block;margin:0 auto">
+    <figcaption>MOI = moment-of-inertia compactness · CH = convex hull ratio · PP = Polsby-Popper.
+    Thresholds: MOI ≥ 0.50, CH ≥ 0.90, PP ≥ 0.50. Score in gold = the metric that row is testing.</figcaption>
+  </figure>
 
   <hr>
   <h2>Prior work</h2>
