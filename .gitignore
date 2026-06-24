@@ -10,3 +10,5 @@ data/county_pop_2023.csv
 data/cache/
 # render artifacts
 output/
+# browser automation
+.playwright-mcp/
