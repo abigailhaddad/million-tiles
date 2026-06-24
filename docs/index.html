@@ -148,38 +148,29 @@
   would nudge the map toward rounder tiles, but the improvement is incremental — the equalising
   pass after seeding is the bigger factor in final tile shape.</p>
 
-  <h2>What the compactness score measures</h2>
-  <p class="mut">Looking at those maps, the recursive-bisection tiles — clean rectangles — scored
-  <em>worse</em> on compactness than the blobby random-growth tiles. That didn't match my
-  intuition of what "gerrymandered" means. So I looked more carefully at what the MOI score
-  is actually measuring: how spread out a shape's pixels are from its centroid, relative to its
-  area. A long thin rectangle scores low for the same reason a circle-with-tentacle does —
-  both have pixels far from their center.</p>
-  <figure>
-    <img src="assets/compactness_pairs.png"
-         alt="Nine shapes arranged in a 3×3 grid; each row shares the same MOI compactness score"
-         style="max-width:520px;display:block;margin:0 auto">
-    <figcaption>Each row has the same MOI score.</figcaption>
-  </figure>
-  <p class="mut">Any single metric is easy to fool. Each row below shows one metric's blind spot:
-  a normal compact shape alongside two "cheat" shapes that pass the metric while still looking
-  gerrymandered. The last row shows what slips through all three at once.</p>
+  <h2>Why we use three compactness metrics</h2>
+  <p class="mut">No single compactness score catches every gerrymandered shape.
+  MOI measures how spread out a tile's pixels are from its centroid — it penalizes elongation,
+  but ignores jagged edges and smooth concavities. Convex hull ratio catches shapes with deep
+  notches, but is blind to elongation. Polsby-Popper penalizes jagged perimeters, but misses
+  shapes with smooth curved concavities. Each metric has a blind spot, so we score every tile
+  on all three and flag tiles that fail any one of them.</p>
+  <p class="mut">The figure below makes this concrete. Each row shows three shapes that all
+  score the <em>same value</em> on that row's metric — a normal compact shape alongside two
+  that look gerrymandered but pass anyway. The last row shows shapes that slip through all
+  three at once.</p>
   <ul class="mut" style="margin:0 0 16px">
-    <li><b>MOI</b> is blind to jagged edges and smooth concavities — a comb and a crescent both pass.</li>
-    <li><b>Convex hull ratio</b> is blind to elongation — a compact horseshoe, an elongated notch, and
-    a crenellated strip all score CH = 0.90 despite looking very different.</li>
-    <li><b>Polsby-Popper</b> is blind to smooth deep concavities — a thick arc and a horseshoe pass
-    because their curved edges are perimeter-efficient.</li>
-    <li><b>All three together</b> still miss the diagonal loophole: a parallelogram is perfectly convex
-    (CH = 1.00), not elongated (MOI ≈ 0.50), and has smooth edges (PP ≈ 0.51), but it slices through
-    a geographic grid at an odd angle.</li>
+    <li><b>MOI = 0.5:</b> a compact rectangle, a jagged comb, and a smooth crescent all score the same — MOI can't see edge roughness or curved concavities.</li>
+    <li><b>CH = 0.9:</b> a compact horseshoe, an elongated notch, and a crenellated strip all match — convex hull ratio can't see elongation.</li>
+    <li><b>PP = 0.5:</b> a squat rectangle, a thick arc, and a wide horseshoe all match — Polsby-Popper can't see smooth deep concavities.</li>
+    <li><b>All three = 0.5 / 0.9 / 0.5:</b> an L-shape and a horseshoe both squeak through every threshold simultaneously.</li>
   </ul>
   <figure>
     <img src="assets/three_metrics.png"
          alt="Four rows of three shapes each; each row shows one metric's blind spots — shapes that pass the threshold but still look gerrymandered"
          style="max-width:560px;display:block;margin:0 auto">
     <figcaption style="color:var(--gold);font-weight:bold">MOI = moment-of-inertia compactness · CH = convex hull ratio · PP = Polsby-Popper.<br>
-    Thresholds: MOI ≥ 0.50, CH ≥ 0.90, PP ≥ 0.50. Score in gold = the metric that row is testing.</figcaption>
+    Thresholds: MOI ≥ 0.5, CH ≥ 0.9, PP ≥ 0.5. All three shapes in each row share the same score.</figcaption>
   </figure>
 
   <hr>
