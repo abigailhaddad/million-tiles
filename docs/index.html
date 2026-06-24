@@ -149,12 +149,13 @@
   pass after seeding is the bigger factor in final tile shape.</p>
 
   <h2>Why we use three compactness metrics</h2>
-  <p class="mut">No single compactness score catches every gerrymandered shape.
-  MOI measures how spread out a tile's pixels are from its centroid — it penalizes elongation,
-  but ignores jagged edges and smooth concavities. Convex hull ratio catches shapes with deep
-  notches, but is blind to elongation. Polsby-Popper penalizes jagged perimeters, but misses
-  shapes with smooth curved concavities. Each metric has a blind spot, so we score every tile
-  on all three and flag tiles that fail any one of them.</p>
+  <p class="mut">The seeding analysis above used MOI alone — moment-of-inertia compactness — as
+  the measure of tile shape. But MOI has blind spots: it only measures how spread out pixels are
+  from the centroid, so it penalizes elongation while missing jagged edges and smooth concavities.
+  After looking at which shapes MOI lets through, we added two more metrics. Convex hull ratio
+  catches shapes with deep notches, but is blind to elongation. Polsby-Popper penalizes jagged
+  perimeters, but misses shapes with smooth curved concavities. Each metric sees something the
+  others don't, so we now score every tile on all three and flag tiles that fail any one of them.</p>
   <p class="mut">The figure below makes this concrete. Each row shows three shapes that all
   score the <em>same value</em> on that row's metric — a normal compact shape alongside two
   that look gerrymandered but pass anyway. The last row shows shapes that slip through all
