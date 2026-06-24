@@ -148,6 +148,20 @@
   would nudge the map toward rounder tiles, but the improvement is incremental — the equalising
   pass after seeding is the bigger factor in final tile shape.</p>
 
+  <h2>What the compactness score measures</h2>
+  <p class="mut">Looking at those maps, the recursive-bisection tiles — clean rectangles — scored
+  <em>worse</em> on compactness than the blobby random-growth tiles. That didn't match my
+  intuition of what "gerrymandered" means. So I looked more carefully at what the MOI score
+  is actually measuring: how spread out a shape's pixels are from its centroid, relative to its
+  area. A long thin rectangle scores low for the same reason a circle-with-tentacle does —
+  both have pixels far from their center.</p>
+  <figure>
+    <img src="assets/compactness_pairs.png"
+         alt="Nine shapes arranged in a 3×3 grid; each row shares the same MOI compactness score"
+         style="max-width:520px;display:block;margin:0 auto">
+    <figcaption>Each row has the same MOI score.</figcaption>
+  </figure>
+
   <hr>
   <h2>Prior work</h2>
   <p class="mut">Partitioning a place into equal-population pieces is an old idea. The closest
