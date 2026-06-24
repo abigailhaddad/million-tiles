@@ -262,10 +262,10 @@ row4 = [
 # ── Verify ────────────────────────────────────────────────────────────────────
 
 rows_data = [
-    ("Moment of Inertia\n(MOI ≥ 0.50)", "m",   row1, [("MOI","m")]),
-    ("Convex Hull ratio\n(CH ≥ 0.90)",  "c",   row2, [("CH","c")]),
-    ("Polsby-Popper\n(PP ≥ 0.50)",      "p",   row3, [("PP","p")]),
-    ("All three\nMOI + CH + PP",        "mcp", row4, [("MOI","m"),("CH","c"),("PP","p")]),
+    ("Moment of Inertia", "m",   row1, [("MOI","m")]),
+    ("Convex Hull ratio", "c",   row2, [("CH","c")]),
+    ("Polsby-Popper",     "p",   row3, [("PP","p")]),
+    ("All three",         "mcp", row4, [("MOI","m"),("CH","c"),("PP","p")]),
 ]
 
 score_fn = {"m": lambda mo,c,p: mo, "c": lambda mo,c,p: c, "p": lambda mo,c,p: p}
@@ -313,21 +313,22 @@ for row_i, (rname, hl, shapes, score_lines) in enumerate(rows_data):
     for col_i in range(len(shapes), 3):
         axes[row_i, col_i].set_visible(False)
 
-    # Row label: description in MUT, shared score(s) in GOLD below
-    axes[row_i, 0].text(-0.05, 0.68, rname,
+    # Row label: "Metric name = value" all in one color
+    mo,c,p = s3(shapes[0][0])
+    if len(score_lines) == 1:
+        slbl, sflag = score_lines[0]
+        val = min(1.0, score_fn[sflag](mo,c,p))
+        label_text = f"{rname} = {val:.1f}"
+    else:
+        scores_str = "\n".join(
+            f"{slbl} = {min(1.0, score_fn[sflag](mo,c,p)):.1f}"
+            for slbl, sflag in score_lines
+        )
+        label_text = f"{rname}\n{scores_str}"
+    axes[row_i, 0].text(-0.05, 0.5, label_text,
                         transform=axes[row_i,0].transAxes,
                         ha="right", va="center", color=MUT,
-                        fontsize=7.5, linespacing=1.5)
-    mo,c,p = s3(shapes[0][0])
-    score_lines_text = "\n".join(
-        f"{slbl} {min(1.0, score_fn[sflag](mo,c,p)):.2f}"
-        for slbl,sflag in score_lines
-    )
-    score_fsz = 9 if len(score_lines)==1 else 7.5
-    axes[row_i, 0].text(-0.05, 0.18, score_lines_text,
-                        transform=axes[row_i,0].transAxes,
-                        ha="right", va="center", color=GOLD,
-                        fontsize=score_fsz, fontweight="bold", linespacing=1.6)
+                        fontsize=7.5, linespacing=1.6)
 
 fig.suptitle("Three compactness metrics: each row shows three shapes\nwith the same score on that metric",
              color=INK, fontsize=11, fontweight="bold", y=0.97)
